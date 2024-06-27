@@ -1,4 +1,4 @@
-FROM registry.redhat.io/rhel8/go-toolset:1.21.9-3.1718100004 AS builder
+FROM registry.redhat.io/rhel9/go-toolset:1.21.9-1.1717085562 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -22,7 +22,7 @@ COPY internal/controller/ internal/controller/
 # by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9-1029
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4-1134
 
 COPY LICENSE /licenses
 COPY --from=builder /opt/app-root/src/manager /

@@ -35,13 +35,9 @@ type NotificationServiceReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=konflux-ci.com,resources=notificationservices,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=konflux-ci.com,resources=notificationservices/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=konflux-ci.com,resources=notificationservices/finalizers,verbs=update
-// +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns,verbs=get;list;watch;create;update;patch;delete;deletecollection
+// +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns,verbs=get;list;watch;create;update;patch
 // +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns/finalizers,verbs=update
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 
 // Reconcile will monitor the pipelinerun, extract its result and send it as a webhook
 // When a pipelinerun is created, it will add a finalizer to it so we will be able to extract the results
