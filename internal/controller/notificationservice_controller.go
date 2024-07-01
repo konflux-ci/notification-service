@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // NotificationServiceReconciler reconciles a NotificationService object
@@ -58,42 +59,38 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, err
 	}
 
-	if IsAnnotationExistInPipelineRun(pipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) &&
-		!IsFinalizerExistInPipelineRun(pipelineRun, NotificationPipelineRunFinalizer) {
-		logger.Info("No need to reconcile pipelinerun %s", pipelineRun.Name)
-		return ctrl.Result{}, nil
-	}
-
 	logger.Info("Reconciling PipelineRun", "Name", pipelineRun.Name)
-	if !IsFinalizerExistInPipelineRun(pipelineRun, NotificationPipelineRunFinalizer) &&
-		!IsAnnotationExistInPipelineRun(pipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) {
+	if !IsPipelineRunEnded(pipelineRun) &&
+		!IsFinalizerExistInPipelineRun(pipelineRun, NotificationPipelineRunFinalizer) {
 		err = AddFinalizerToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
 		if err != nil {
 			logger.Error(err, "Failed to add finalizer to pipelinerun ", pipelineRun.Name)
+			return ctrl.Result{}, err
 		}
 	}
 
-	if IsPipelineRunEndedSuccessfully(pipelineRun) &&
-		!IsAnnotationExistInPipelineRun(pipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) {
-		results, err := GetResultsFromPipelineRun(pipelineRun)
-		if err != nil {
-			logger.Error(err, "Failed to get results for pipelineRun ", pipelineRun.Name)
-		} else {
+	if IsPipelineRunEnded(pipelineRun) {
+		if IsPipelineRunEndedSuccessfully(pipelineRun) && !IsAnnotationExistInPipelineRun(pipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) {
+			results, err := GetResultsFromPipelineRun(pipelineRun)
+			if err != nil {
+				logger.Error(err, "Failed to get results for pipelineRun ", pipelineRun.Name)
+				return ctrl.Result{}, err
+			}
+
 			fmt.Printf("Results for pipelinerun %s are: %s\n", pipelineRun.Name, results)
 			err = AddAnnotationToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
 			if err != nil {
-				logger.Error(err, "Failed to add annotation")
+				logger.Error(err, "Failed to add annotation to pipelinerun ", pipelineRun.Name)
+				return ctrl.Result{}, err
 			}
 		}
-	}
-
-	if IsPipelineRunEndedSuccessfully(pipelineRun) &&
-		IsAnnotationExistInPipelineRun(pipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) {
 		err = RemoveFinalizerFromPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
 		if err != nil {
 			logger.Error(err, "Failed to remove finalizer to pipelinerun ", pipelineRun.Name)
+			return ctrl.Result{}, err
 		}
 	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -101,5 +98,10 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 func (r *NotificationServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tektonv1.PipelineRun{}).
+		WithEventFilter(predicate.Or(
+			PushPipelineRunCreatedPredicate(),
+			PushPipelineRunEndedFinalizerPredicate(),
+			PushPipelineRunEndedNoAnnotationPredicate(),
+		)).
 		Complete(r)
 }
