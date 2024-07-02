@@ -77,10 +77,7 @@ func AddAnnotationToPipelineRun(ctx context.Context, pipelineRun *tektonv1.Pipel
 // IsFinalizerExistInPipelineRun checks if an finalizer exists in pipelineRun
 // Return true if yes, otherwise return false
 func IsFinalizerExistInPipelineRun(pipelineRun *tektonv1.PipelineRun, finalizer string) bool {
-	if controllerutil.ContainsFinalizer(pipelineRun, finalizer) {
-		return true
-	}
-	return false
+	return controllerutil.ContainsFinalizer(pipelineRun, finalizer)
 }
 
 // IsPipelineRunEndedSuccessfully returns a boolean indicating whether the PipelineRun succeeded or not.
@@ -91,8 +88,5 @@ func IsPipelineRunEndedSuccessfully(pipelineRun *tektonv1.PipelineRun) bool {
 // IsNotificationAnnotationExist checks if an annotation exists in pipelineRun
 // Return true if yes, otherwise return false
 func IsAnnotationExistInPipelineRun(pipelineRun *tektonv1.PipelineRun, annotation string, annotationValue string) bool {
-	if metadata.HasAnnotationWithValue(pipelineRun, annotation, annotationValue) {
-		return true
-	}
-	return false
+	return metadata.HasAnnotationWithValue(pipelineRun, annotation, annotationValue)
 }
