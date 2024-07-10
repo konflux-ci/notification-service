@@ -47,7 +47,7 @@ type NotificationServiceReconciler struct {
 // to allow the deletion of this pipelinerun
 func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
-	logger := r.Log.WithValues("pipelinerun", req.NamespacedName)
+	logger := r.Log.WithName("Notification controller")
 	pipelineRun := &tektonv1.PipelineRun{}
 
 	err := r.Get(ctx, req.NamespacedName, pipelineRun)
@@ -64,7 +64,7 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 		!IsFinalizerExistInPipelineRun(pipelineRun, NotificationPipelineRunFinalizer) {
 		err = AddFinalizerToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
 		if err != nil {
-			logger.Error(err, "Failed to add finalizer to pipelinerun ", pipelineRun.Name)
+			logger.Error(err, "Failed to add finalizer", "pipelineRun", pipelineRun.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -73,20 +73,20 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 		if IsPipelineRunEndedSuccessfully(pipelineRun) && !IsAnnotationExistInPipelineRun(pipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) {
 			results, err := GetResultsFromPipelineRun(pipelineRun)
 			if err != nil {
-				logger.Error(err, "Failed to get results for pipelineRun ", pipelineRun.Name)
+				logger.Error(err, "Failed to get results", "pipelineRun", pipelineRun.Name)
 				return ctrl.Result{}, err
 			}
 
 			fmt.Printf("Results for pipelinerun %s are: %s\n", pipelineRun.Name, results)
 			err = AddAnnotationToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
 			if err != nil {
-				logger.Error(err, "Failed to add annotation to pipelinerun ", pipelineRun.Name)
+				logger.Error(err, "Failed to add annotation", "pipelineRun", pipelineRun.Name)
 				return ctrl.Result{}, err
 			}
 		}
 		err = RemoveFinalizerFromPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
 		if err != nil {
-			logger.Error(err, "Failed to remove finalizer to pipelinerun ", pipelineRun.Name)
+			logger.Error(err, "Failed to remove finalizer", "pipelineRun", pipelineRun.Name)
 			return ctrl.Result{}, err
 		}
 	}
