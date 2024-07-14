@@ -15,20 +15,20 @@ import (
 const NotificationPipelineRunFinalizer string = "konflux.ci/notification"
 const NotificationPipelineRunAnnotation string = "konflux.ci/notified"
 const NotificationPipelineRunAnnotationValue string = "true"
-const PipelineRunTypeAnnotation string = "pipelinesascode.tekton.dev/event-type"
-const PushPipelineRunTypeAnnotationValue string = "push"
+const PipelineRunTypeLabel string = "pipelinesascode.tekton.dev/event-type"
+const PushPipelineRunTypeValue string = "push"
 
 // AddFinalizerToPipelineRun adds the finalizer to the PipelineRun.
 // If finalizer was not added successfully, a non-nil error is returned.
 func AddFinalizerToPipelineRun(ctx context.Context, pipelineRun *tektonv1.PipelineRun, r *NotificationServiceReconciler, finalizer string) error {
-	r.Log.Info("Adding finalizer to %s", pipelineRun.Name)
+	r.Log.Info("Adding finalizer", "pipelineRun", pipelineRun.Name)
 	patch := client.MergeFrom(pipelineRun.DeepCopy())
 	if ok := controllerutil.AddFinalizer(pipelineRun, finalizer); ok {
 		err := r.Client.Patch(ctx, pipelineRun, patch)
 		if err != nil {
 			return fmt.Errorf("error occurred while patching the updated PipelineRun after finalizer addition: %w", err)
 		}
-		r.Log.Info("Finalizer was added to PipelineRun %s", pipelineRun.Name)
+		r.Log.Info("Finalizer was added", "pipelineRun", pipelineRun.Name)
 	}
 	return nil
 }
@@ -36,14 +36,14 @@ func AddFinalizerToPipelineRun(ctx context.Context, pipelineRun *tektonv1.Pipeli
 // RemoveFinalizerFromPipelineRun removes the finalizer from the PipelineRun.
 // If finalizer was not removed successfully, a non-nil error is returned.
 func RemoveFinalizerFromPipelineRun(ctx context.Context, pipelineRun *tektonv1.PipelineRun, r *NotificationServiceReconciler, finalizer string) error {
-	r.Log.Info("Removing finalizer from %s", pipelineRun.Name)
+	r.Log.Info("Removing finalizer", "pipelineRun", pipelineRun.Name)
 	patch := client.MergeFrom(pipelineRun.DeepCopy())
 	if ok := controllerutil.RemoveFinalizer(pipelineRun, finalizer); ok {
 		err := r.Client.Patch(ctx, pipelineRun, patch)
 		if err != nil {
 			return fmt.Errorf("error occurred while patching the updated PipelineRun after finalizer removal: %w", err)
 		}
-		r.Log.Info("Finalizer was removed from %s", pipelineRun.Name)
+		r.Log.Info("Finalizer was removed", "pipelineRun", pipelineRun.Name)
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func GetResultsFromPipelineRun(pipelineRun *tektonv1.PipelineRun) ([]byte, error
 // AddNotificationAnnotationToPipelineRun adds an annotation to the PipelineRun.
 // If annotation was not added successfully, a non-nil error is returned.
 func AddAnnotationToPipelineRun(ctx context.Context, pipelineRun *tektonv1.PipelineRun, r *NotificationServiceReconciler, annotation string, annotationValue string) error {
-	r.Log.Info("Adding annotation to %s", pipelineRun.Name)
+	r.Log.Info("Adding annotation", "pipelineRun", pipelineRun.Name)
 	patch := client.MergeFrom(pipelineRun.DeepCopy())
 	err := metadata.SetAnnotation(&pipelineRun.ObjectMeta, annotation, annotationValue)
 	if err != nil {
@@ -69,10 +69,10 @@ func AddAnnotationToPipelineRun(ctx context.Context, pipelineRun *tektonv1.Pipel
 	}
 	err = r.Client.Patch(ctx, pipelineRun, patch)
 	if err != nil {
-		r.Log.Info("Error in update annotation client: %s", err)
+		r.Log.Error(err, "Error in update annotation patching", "pipelineRun", pipelineRun.Name)
 		return fmt.Errorf("error occurred while patching the updated pipelineRun after annotation addition: %w", err)
 	}
-	r.Log.Info("Annotation was added to %s", pipelineRun.Name)
+	r.Log.Info("Annotation was added", "pipelineRun", pipelineRun.Name)
 	return nil
 }
 
@@ -120,7 +120,10 @@ func IsAnnotationExistInPipelineRun(object client.Object, annotation string, ann
 // If the object passed to this function is not a PipelineRun, the function will return false.
 func IsPushPipelineRun(object client.Object) bool {
 	if pipelineRun, ok := object.(*tektonv1.PipelineRun); ok {
-		return metadata.HasAnnotationWithValue(pipelineRun, PipelineRunTypeAnnotation, PushPipelineRunTypeAnnotationValue)
+		return metadata.HasLabelWithValue(pipelineRun,
+			PipelineRunTypeLabel,
+			PushPipelineRunTypeValue)
 	}
+
 	return false
 }

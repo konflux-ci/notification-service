@@ -17,15 +17,21 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
+	"go/build"
 	"path/filepath"
 	"runtime"
 	"testing"
 
+	ctrl "sigs.k8s.io/controller-runtime"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"k8s.io/client-go/kubernetes/scheme"
+	toolkit "github.com/konflux-ci/operator-toolkit/test"
+	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -40,6 +46,8 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var ctx context.Context
+var cancel context.CancelFunc
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -47,13 +55,23 @@ func TestControllers(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
-var _ = BeforeSuite(func() {
+var _ = BeforeEach(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	ctx, cancel = context.WithCancel(context.TODO())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
-		ErrorIfCRDPathMissing: false,
+		CRDDirectoryPaths: []string{
+			filepath.Join(
+				build.Default.GOPATH,
+				"pkg", "mod", toolkit.GetRelativeDependencyPath("tektoncd/pipeline"), "config",
+			),
+			filepath.Join(
+				build.Default.GOPATH,
+				"pkg", "mod", toolkit.GetRelativeDependencyPath("tektoncd/pipeline"), "config", "300-crds",
+			),
+		},
+		ErrorIfCRDPathMissing: true,
 
 		// The BinaryAssetsDirectory is only required if you want to run the tests directly
 		// without call the makefile target test. If not informed it will look for the
@@ -70,15 +88,56 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
+	// Adding tektonv1 to the scheme and validate it
+	Expect(tektonv1.AddToScheme(clientsetscheme.Scheme)).To(Succeed())
+
 	// +kubebuilder:scaffold:scheme
 
-	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	// Disabling Cache for pipelinerun to avoid reflector watch errors
+	// https://github.com/kubernetes-sigs/controller-runtime/issues/2723
+	k8sClient, err = client.New(cfg, client.Options{
+		Scheme: clientsetscheme.Scheme,
+		Cache: &client.CacheOptions{
+			DisableFor: []client.Object{
+				&tektonv1.PipelineRun{},
+			},
+		},
+	})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	/*
+		Create k8sManager and validate it
+		Note that we set up both a "live" k8s client and a separate client from the manager. This is because when making
+		assertions in tests, you generally want to assert against the live state of the API server. If you use the client
+		from the manager (`k8sManager.GetClient`), you'd end up asserting against the contents of the cache instead, which is
+		slower and can introduce flakiness into your tests. We could use the manager's `APIReader` to accomplish the same
+		thing, but that would leave us with two clients in our test assertions and setup (one for reading, one for writing),
+		and it'd be easy to make mistakes.
+		https://github.com/kubernetes-sigs/kubebuilder/blob/de1cc60900b896b2195e403a40c976a892df4921/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/suite_test.go#L136
+	*/
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: clientsetscheme.Scheme,
+	})
+	Expect(err).ToNot(HaveOccurred())
+
+	err = (&NotificationServiceReconciler{
+		Client: k8sManager.GetClient(),
+		Scheme: k8sManager.GetScheme(),
+		Log:    k8sManager.GetLogger(),
+	}).SetupWithManager(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		defer GinkgoRecover()
+		err = k8sManager.Start(ctx)
+		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+	}()
+
 })
 
-var _ = AfterSuite(func() {
+var _ = AfterEach(func() {
+	cancel()
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
