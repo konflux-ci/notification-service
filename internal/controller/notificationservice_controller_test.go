@@ -85,14 +85,12 @@ var _ = Describe("NotificationService Controller", func() {
 			}
 			err := k8sClient.Create(ctx, pushPipelineRun)
 			Expect(err).NotTo(HaveOccurred(), "failed to create test Pipelinerun resource")
-
 			// Wait for the resource to be created
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, pushPipelineRunLookupKey, createdPipelineRun)
 				return err == nil
 			}, timeout, interval).Should(BeTrue())
 		})
-
 		Context("when a push pipelinerun is created and end successfully", func() {
 			It("should reconcile successfully - Add finalizer, Read the results, add annotation and remove the finalizer", func() {
 				By("Creating a new push pipelinerun and add finalizer")
@@ -104,6 +102,8 @@ var _ = Describe("NotificationService Controller", func() {
 					return controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)
 				}, timeout, interval).Should(BeTrue())
 				Expect(controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)).To(BeTrue())
+				// Check the Notify was not called
+				Expect(mn.Counter).To(BeZero())
 
 				By("Updating status to completed successfully")
 				createdPipelineRun.Status = tektonv1.PipelineRunStatus{
@@ -150,6 +150,8 @@ var _ = Describe("NotificationService Controller", func() {
 					return metadata.HasAnnotationWithValue(createdPipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
 				}, timeout, interval).Should(BeTrue())
 				Expect(controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)).To(BeFalse())
+				// Check the Notify was called once
+				Expect(mn.Counter).To(Equal(1))
 			})
 		})
 
@@ -192,6 +194,8 @@ var _ = Describe("NotificationService Controller", func() {
 					return controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)
 				}, timeout, interval).Should(BeFalse())
 				Expect(metadata.HasAnnotationWithValue(createdPipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)).To(BeFalse())
+				// Check the Notify was not called
+				Expect(mn.Counter).To(BeZero())
 			})
 		})
 	})
@@ -289,6 +293,8 @@ var _ = Describe("NotificationService Controller", func() {
 				// Annotation and finalizer should not be added
 				Expect(controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)).To(BeFalse())
 				Expect(metadata.HasAnnotationWithValue(createdPipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)).To(BeFalse())
+				// Check the Notify was not called
+				Expect(mn.Counter).To(BeZero())
 			})
 		})
 	})

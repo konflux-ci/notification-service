@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"github.com/konflux-ci/notification-service/pkg/notifier"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,8 +33,9 @@ import (
 // NotificationServiceReconciler reconciles a NotificationService object
 type NotificationServiceReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Notifier notifier.Notifier
 }
 
 // +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns,verbs=get;list;watch;create;update;patch
@@ -46,7 +48,6 @@ type NotificationServiceReconciler struct {
 // An annotation will be added to mark this pipelinerun as handled and the finalizer will be rmoved
 // to allow the deletion of this pipelinerun
 func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-
 	logger := r.Log.WithName("Notification controller")
 	pipelineRun := &tektonv1.PipelineRun{}
 
@@ -76,7 +77,11 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 				logger.Error(err, "Failed to get results", "pipelineRun", pipelineRun.Name)
 				return ctrl.Result{}, err
 			}
-
+			err = r.Notifier.Notify(ctx, string(results))
+			if err != nil {
+				logger.Error(err, "Failed to Notify")
+				return ctrl.Result{Requeue: true}, err
+			}
 			fmt.Printf("Results for pipelinerun %s are: %s\n", pipelineRun.Name, results)
 			err = AddAnnotationToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
 			if err != nil {
