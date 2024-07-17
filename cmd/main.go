@@ -26,6 +26,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/konflux-ci/notification-service/internal/controller"
+	"github.com/konflux-ci/notification-service/pkg/notifier"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -122,9 +123,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	snsClient, err := notifier.NewSNSClient()
+	if err != nil {
+		setupLog.Error(err, "Error creating notifier")
+		os.Exit(1)
+	}
+
+	ntf := &notifier.SNSNotifier{
+		Pub: snsClient,
+	}
+
 	if err = (&controller.NotificationServiceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Notifier: ntf,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NotificationService")
 		os.Exit(1)

@@ -48,11 +48,21 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var ctx context.Context
 var cancel context.CancelFunc
+var mn *MockNotifier
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecs(t, "Controller Suite")
+}
+
+type MockNotifier struct {
+	Counter int
+}
+
+func (mn *MockNotifier) Notify(ctx context.Context, message string) error {
+	mn.Counter++
+	return nil
 }
 
 var _ = BeforeEach(func() {
@@ -121,11 +131,17 @@ var _ = BeforeEach(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	err = (&NotificationServiceReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
-		Log:    k8sManager.GetLogger(),
-	}).SetupWithManager(k8sManager)
+	// Create a mock of notifier
+	mn = &MockNotifier{}
+
+	nsr := &NotificationServiceReconciler{
+		Client:   k8sManager.GetClient(),
+		Scheme:   k8sManager.GetScheme(),
+		Log:      k8sManager.GetLogger(),
+		Notifier: mn,
+	}
+
+	err = nsr.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {
