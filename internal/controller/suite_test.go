@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go/build"
 	"path/filepath"
@@ -49,6 +50,8 @@ var testEnv *envtest.Environment
 var ctx context.Context
 var cancel context.CancelFunc
 var mn *MockNotifier
+var nsr *NotificationServiceReconciler
+var fakeErrorNsr *NotificationServiceReconciler
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -62,6 +65,18 @@ type MockNotifier struct {
 
 func (mn *MockNotifier) Notify(ctx context.Context, message string) error {
 	mn.Counter++
+	return nil
+}
+
+type clientMock struct {
+	client.Client
+	shouldThroughError bool
+}
+
+func (p *clientMock) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+	if p.shouldThroughError {
+		return errors.New("Failed to patch")
+	}
 	return nil
 }
 
@@ -134,15 +149,22 @@ var _ = BeforeEach(func() {
 	// Create a mock of notifier
 	mn = &MockNotifier{}
 
-	nsr := &NotificationServiceReconciler{
+	nsr = &NotificationServiceReconciler{
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),
 		Log:      k8sManager.GetLogger(),
 		Notifier: mn,
 	}
-
 	err = nsr.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
+
+	fakeErrorPatchClient := &clientMock{shouldThroughError: true}
+	fakeErrorNsr = &NotificationServiceReconciler{
+		Client:   fakeErrorPatchClient,
+		Scheme:   k8sManager.GetScheme(),
+		Log:      k8sManager.GetLogger(),
+		Notifier: mn,
+	}
 
 	go func() {
 		defer GinkgoRecover()
