@@ -49,11 +49,20 @@ func RemoveFinalizerFromPipelineRun(ctx context.Context, pipelineRun *tektonv1.P
 }
 
 // GetResultsFromPipelineRun extracts results from pipelinerun
-// Return error if failed to extract results
+// And adds the pipelinerunName
+// Return error if failed to extract results or if results does not exist
 func GetResultsFromPipelineRun(pipelineRun *tektonv1.PipelineRun) ([]byte, error) {
-	results, err := json.Marshal(pipelineRun.Status.Results)
+	namedResults := []tektonv1.PipelineRunResult{
+		{
+			Name:  "PIPELINERUN_NAME",
+			Value: *tektonv1.NewStructuredValues(pipelineRun.Name),
+		},
+	}
+	fetchedResults := pipelineRun.Status.Results
+	fullResults := append(namedResults, fetchedResults...)
+	results, err := json.Marshal(fullResults)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get results from pipelinerun %s: %w", pipelineRun.Name, err)
+		return nil, fmt.Errorf("failed to marshel results from pipelinerun %s: %w", pipelineRun.Name, err)
 	}
 	return results, nil
 }
