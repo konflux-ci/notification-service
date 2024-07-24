@@ -41,7 +41,7 @@ func TestNewSNSNotifier(t *testing.T) {
 func TestSuccessNotify(t *testing.T) {
 	ctx := context.TODO()
 	m := &MockSNSPublisher{fail: false}
-	mocker := SNSNotifier{Pub: m}
+	mocker := SNSNotifier{Pub: m, Log: logger}
 
 	got := mocker.Notify(ctx, "testMessage")
 	if got != nil {

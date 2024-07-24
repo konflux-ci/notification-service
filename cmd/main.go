@@ -131,6 +131,7 @@ func main() {
 
 	ntf := &notifier.SNSNotifier{
 		Pub: snsClient,
+		Log: mgr.GetLogger(),
 	}
 
 	if err = (&controller.NotificationServiceReconciler{
