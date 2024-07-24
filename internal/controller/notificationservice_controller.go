@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/konflux-ci/notification-service/pkg/notifier"
@@ -80,7 +79,7 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 			err = r.Notifier.Notify(ctx, string(results))
 			if err != nil {
 				logger.Error(err, "Failed to Notify")
-				return ctrl.Result{RequeueAfter: 3 * time.Second}, err
+				return ctrl.Result{}, err
 			}
 			logger.Info("SNS Notified", "pipelinerun", pipelineRun.Name, "namespace", pipelineRun.Namespace)
 			err = AddAnnotationToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
