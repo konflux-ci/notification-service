@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -83,7 +82,7 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 				logger.Error(err, "Failed to Notify")
 				return ctrl.Result{RequeueAfter: 3 * time.Second}, err
 			}
-			fmt.Printf("Results for pipelinerun %s are: %s\n", pipelineRun.Name, results)
+			logger.Info("SNS Notified", "pipelinerun", pipelineRun.Name, "namespace", pipelineRun.Namespace)
 			err = AddAnnotationToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
 			if err != nil {
 				logger.Error(err, "Failed to add annotation", "pipelineRun", pipelineRun.Name)
