@@ -136,6 +136,7 @@ func main() {
 	if err = (&controller.NotificationServiceReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
+		Log:      mgr.GetLogger(),
 		Notifier: ntf,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NotificationService")
