@@ -7,6 +7,12 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/go-logr/logr"
+)
+
+const (
+	refreshErrorMessage = "Refresh Error"
+	publishErrorMessage = "Publish Error"
 )
 
 type MockSNSPublisher struct {
@@ -21,41 +27,84 @@ func (msn *MockSNSPublisher) Publish(
 	if msn.fail == false {
 		return out, nil
 	} else {
-		return out, errors.New("error")
+		return out, errors.New(publishErrorMessage)
 	}
-
 }
 
-func TestNewSNSNotifier(t *testing.T) {
+func MockSucceessfulRefreshSuccessPublishClient() (Publisher, error) {
+	mp := &MockSNSPublisher{fail: false}
+	return mp, nil
+}
+
+func MockSucceessfulRefreshFailPublishClient() (Publisher, error) {
+	mp := &MockSNSPublisher{fail: true}
+	return mp, nil
+}
+
+func MockFailedRefreshClient() (Publisher, error) {
+	return nil, errors.New(refreshErrorMessage)
+}
+
+var logger logr.Logger
+
+func TestRefreshClient(t *testing.T) {
 	region := "myRegion"
 	err := os.Setenv("NOTIFICATION_REGION", region)
 	if err != nil {
 		t.Errorf("Could not set the region environment variable, failing the test")
 	}
-	snsClient, _ := NewSNSClient()
-	if snsClient.Options().Region != region {
-		t.Errorf("got %q, wanted %q", snsClient.Options().Region, region)
+	_, err = RefreshClient()
+	if err != nil {
+		t.Errorf("got %q, wanted nil", err)
 	}
+
 }
 
 func TestSuccessNotify(t *testing.T) {
 	ctx := context.TODO()
-	m := &MockSNSPublisher{fail: false}
-	mocker := SNSNotifier{Pub: m, Log: logger}
-
-	got := mocker.Notify(ctx, "testMessage")
-	if got != nil {
-		t.Errorf("got %q, wanted nil", got)
+	mp := &MockSNSPublisher{fail: false}
+	ntf := &SNSNotifier{
+		Pub:           mp,
+		RefreshClient: MockSucceessfulRefreshSuccessPublishClient,
+		Log:           logger,
+	}
+	err := ntf.Notify(ctx, "testMessage")
+	if err != nil {
+		t.Errorf("got %q, wanted nil", err)
 	}
 }
 
-func TestFailedNotify(t *testing.T) {
+func TestFailedRefreshNotify(t *testing.T) {
 	ctx := context.TODO()
-	m := &MockSNSPublisher{fail: true}
-	mocker := SNSNotifier{Pub: m}
+	mp := &MockSNSPublisher{fail: false}
+	ntf := &SNSNotifier{
+		Pub:           mp,
+		RefreshClient: MockFailedRefreshClient,
+		Log:           logger,
+	}
+	err := ntf.Notify(ctx, "testMessage")
+	if err == nil {
+		t.Errorf("got %q, wanted nil", err)
+	}
+	if err.Error() != refreshErrorMessage {
+		t.Errorf("got %q, wanted %q", err.Error(), refreshErrorMessage)
+	}
+}
 
-	got := mocker.Notify(ctx, "testMessage")
-	if got == nil {
-		t.Errorf("got %q, wanted nil", got)
+func TestFailedPublishNotify(t *testing.T) {
+	ctx := context.TODO()
+	mp := &MockSNSPublisher{fail: true}
+	ntf := &SNSNotifier{
+		Pub:           mp,
+		RefreshClient: MockSucceessfulRefreshFailPublishClient,
+		Log:           logger,
+	}
+
+	err := ntf.Notify(ctx, "testMessage")
+	if err == nil {
+		t.Errorf("got %q, wanted nil", err)
+	}
+	if err.Error() != publishErrorMessage {
+		t.Errorf("got %q, wanted %q", err.Error(), publishErrorMessage)
 	}
 }
