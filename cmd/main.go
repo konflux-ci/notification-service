@@ -25,6 +25,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/konflux-ci/notification-service/internal/controller"
 	"github.com/konflux-ci/notification-service/pkg/notifier"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
@@ -123,15 +124,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	snsClient, err := notifier.NewSNSClient()
-	if err != nil {
-		setupLog.Error(err, "Error creating notifier")
-		os.Exit(1)
-	}
+	var snsClient *sns.Client
 
 	ntf := &notifier.SNSNotifier{
-		Pub: snsClient,
-		Log: mgr.GetLogger(),
+		Pub:           snsClient,
+		RefreshClient: notifier.RefreshClient,
+		Log:           mgr.GetLogger(),
 	}
 
 	if err = (&controller.NotificationServiceReconciler{
