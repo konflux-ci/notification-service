@@ -70,6 +70,7 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	if IsPipelineRunEnded(pipelineRun) {
+		logger.Info("Pipelinerun ended", "pipelinerun", pipelineRun.Name, "ended_successfully", IsPipelineRunEndedSuccessfully(pipelineRun))
 		if IsPipelineRunEndedSuccessfully(pipelineRun) && !IsAnnotationExistInPipelineRun(pipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) {
 			results, err := GetResultsFromPipelineRun(pipelineRun)
 			if err != nil {
