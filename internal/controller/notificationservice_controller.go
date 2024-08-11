@@ -78,8 +78,10 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 				return ctrl.Result{}, err
 			}
 			err = r.Notifier.Notify(ctx, string(results))
+			notifications.Inc()
 			if err != nil {
 				logger.Error(err, "Failed to Notify")
+				notificationsFailures.Inc()
 				return ctrl.Result{}, err
 			}
 			logger.Info("SNS Notified", "pipelinerun", pipelineRun.Name, "namespace", pipelineRun.Namespace)
