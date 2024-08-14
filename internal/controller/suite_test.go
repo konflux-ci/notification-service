@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -46,12 +47,12 @@ import (
 
 var cfg *rest.Config
 var k8sClient client.Client
+var k8sManager manager.Manager
 var testEnv *envtest.Environment
 var ctx context.Context
 var cancel context.CancelFunc
-var mn *MockNotifier
-var nsr *NotificationServiceReconciler
-var fakeErrorNsr *NotificationServiceReconciler
+var mn, fakeErrorNotify *MockNotifier
+var nsr, fakeErrorNotifyNsr, fakeErrorNsr *NotificationServiceReconciler
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -60,11 +61,15 @@ func TestControllers(t *testing.T) {
 }
 
 type MockNotifier struct {
-	Counter int
+	Counter            int
+	shouldThroughError bool
 }
 
 func (mn *MockNotifier) Notify(ctx context.Context, message string) error {
 	mn.Counter++
+	if mn.shouldThroughError {
+		return errors.New("Failed to Notify")
+	}
 	return nil
 }
 
@@ -141,23 +146,28 @@ var _ = BeforeEach(func() {
 		and it'd be easy to make mistakes.
 		https://github.com/kubernetes-sigs/kubebuilder/blob/de1cc60900b896b2195e403a40c976a892df4921/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/suite_test.go#L136
 	*/
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: clientsetscheme.Scheme,
 	})
 	Expect(err).ToNot(HaveOccurred())
 
 	// Create a mock of notifier
-	mn = &MockNotifier{}
-
+	mn = &MockNotifier{shouldThroughError: false}
 	nsr = &NotificationServiceReconciler{
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),
 		Log:      k8sManager.GetLogger(),
 		Notifier: mn,
 	}
-	err = nsr.SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
+	// err = nsr.SetupWithManager(k8sManager)
+	// Expect(err).ToNot(HaveOccurred())
+	fakeErrorNotify = &MockNotifier{shouldThroughError: true}
+	fakeErrorNotifyNsr = &NotificationServiceReconciler{
+		Client:   k8sManager.GetClient(),
+		Scheme:   k8sManager.GetScheme(),
+		Log:      k8sManager.GetLogger(),
+		Notifier: fakeErrorNotify,
+	}
 	fakeErrorPatchClient := &clientMock{shouldThroughError: true}
 	fakeErrorNsr = &NotificationServiceReconciler{
 		Client:   fakeErrorPatchClient,
