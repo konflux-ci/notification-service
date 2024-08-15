@@ -17,6 +17,7 @@ const NotificationPipelineRunAnnotation string = "konflux.ci/notified"
 const NotificationPipelineRunAnnotationValue string = "true"
 const PipelineRunTypeLabel string = "pipelinesascode.tekton.dev/event-type"
 const PushPipelineRunTypeValue string = "push"
+const AppLabelKey string = "appstudio.openshift.io/application"
 
 // AddFinalizerToPipelineRun adds the finalizer to the PipelineRun.
 // If finalizer was not added successfully, a non-nil error is returned.
@@ -56,6 +57,14 @@ func GetResultsFromPipelineRun(pipelineRun *tektonv1.PipelineRun) ([]byte, error
 		{
 			Name:  "PIPELINERUN_NAME",
 			Value: *tektonv1.NewStructuredValues(pipelineRun.Name),
+		},
+		{
+			Name:  "NAMESPACE",
+			Value: *tektonv1.NewStructuredValues(pipelineRun.Namespace),
+		},
+		{
+			Name:  "APPLICATION",
+			Value: *tektonv1.NewStructuredValues(GetApplicationNameFromPipelineRun(pipelineRun)),
 		},
 	}
 	fetchedResults := pipelineRun.Status.Results
@@ -135,4 +144,14 @@ func IsPushPipelineRun(object client.Object) bool {
 	}
 
 	return false
+}
+
+// GetApplicationNameFromPipelineRun gets the application name from the application label
+// Returns the application name or empty string in case the applicatio name could not retrieved
+func GetApplicationNameFromPipelineRun(pipelineRun *tektonv1.PipelineRun) string {
+	appLabel, err := metadata.GetLabelsWithPrefix(pipelineRun, AppLabelKey)
+	if err != nil {
+		return ""
+	}
+	return appLabel[AppLabelKey]
 }
