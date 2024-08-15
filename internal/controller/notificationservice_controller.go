@@ -84,7 +84,7 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 				notificationsFailures.Inc()
 				return ctrl.Result{}, err
 			}
-			logger.Info("SNS Notified", "pipelinerun", pipelineRun.Name, "namespace", pipelineRun.Namespace)
+			logger.Info("SNS Notified", "message", string(results))
 			err = AddAnnotationToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
 			if err != nil {
 				logger.Error(err, "Failed to add annotation", "pipelineRun", pipelineRun.Name)

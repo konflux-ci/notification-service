@@ -35,13 +35,14 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 	testPipelineLookupKey := types.NamespacedName{Name: testResourcesPipelineRunName, Namespace: namespace}
 	testPipelineRun := &tektonv1.PipelineRun{}
 
-	Describe("Push Pipelinerun; Ended; with finalizer, annotation and results", func() {
+	Describe("Push Pipelinerun; Ended; with finalizer, annotation, results and application name", func() {
 		testTruePipelineRun = &tektonv1.PipelineRun{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pushPipelineRunName,
 				Namespace: namespace,
 				Labels: map[string]string{
 					PipelineRunTypeLabel: PushPipelineRunTypeValue,
+					AppLabelKey:          "myapp",
 				},
 				Finalizers: []string{
 					NotificationPipelineRunFinalizer,
@@ -109,13 +110,25 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 				got := IsPipelineRunEndedSuccessfully(testTruePipelineRun)
 				Expect(got).To(BeTrue())
 			})
+			It("GetApplicationNameFromPipelineRun should extract the application name", func() {
+				got := GetApplicationNameFromPipelineRun(testTruePipelineRun)
+				Expect(got).To(Equal("myapp"))
+			})
 			It("GetResultsFromPipelineRun should extract the result and add it the pipelinerunName", func() {
 				got, err := GetResultsFromPipelineRun(testTruePipelineRun)
 				Expect(err).ToNot(HaveOccurred())
 				result := []tektonv1.PipelineRunResult{
 					{
 						Name:  "PIPELINERUN_NAME",
-						Value: *tektonv1.NewStructuredValues(testTruePipelineRun.Name),
+						Value: *tektonv1.NewStructuredValues(pushPipelineRunName),
+					},
+					{
+						Name:  "NAMESPACE",
+						Value: *tektonv1.NewStructuredValues(namespace),
+					},
+					{
+						Name:  "APPLICATION",
+						Value: *tektonv1.NewStructuredValues("myapp"),
 					},
 					{
 						Name:  "IMAGE_DIGEST",
@@ -140,7 +153,7 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 			})
 		})
 	})
-	Describe("Pull_request Pipelinerun; Not Ended; without finalizer, annotation or results", func() {
+	Describe("Pull_request Pipelinerun; Not Ended; without finalizer, annotation, results and application name", func() {
 		testFalsePipelineRun = &tektonv1.PipelineRun{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "testPullRequestPipelineRun",
@@ -196,13 +209,25 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 				got := IsPipelineRunEndedSuccessfully(testFalsePipelineRun)
 				Expect(got).To(BeFalse())
 			})
-			It("GetResultsFromPipelineRun should add pipelinerun name to empty results", func() {
+			It("GetApplicationNameFromPipelineRun should return empty string", func() {
+				got := GetApplicationNameFromPipelineRun(testFalsePipelineRun)
+				Expect(got).To(Equal(""))
+			})
+			It("GetResultsFromPipelineRun should add pipelinerun, namespace and application name to empty results", func() {
 				got, err := GetResultsFromPipelineRun(testFalsePipelineRun)
 				Expect(err).ToNot(HaveOccurred())
 				result := []tektonv1.PipelineRunResult{
 					{
 						Name:  "PIPELINERUN_NAME",
-						Value: *tektonv1.NewStructuredValues(testFalsePipelineRun.Name),
+						Value: *tektonv1.NewStructuredValues("testPullRequestPipelineRun"),
+					},
+					{
+						Name:  "NAMESPACE",
+						Value: *tektonv1.NewStructuredValues(namespace),
+					},
+					{
+						Name:  "APPLICATION",
+						Value: *tektonv1.NewStructuredValues(""),
 					},
 				}
 				expectedResult, err := json.Marshal(result)
