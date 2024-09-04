@@ -3,15 +3,13 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
-    app.kubernetes.io/name: notification-service
-    app.kubernetes.io/managed-by: kustomize
   name: controller-manager-metrics-service
   namespace: system
 spec:
   ports:
-  - name: http
-    port: 8080
+  - name: https
+    port: 8443
     protocol: TCP
-    targetPort: 8080
+    targetPort: https
   selector:
     control-plane: controller-manager

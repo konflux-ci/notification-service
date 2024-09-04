@@ -1,2 +1,7 @@
 resources:
 - manager.yaml
+
+images:
+- name: controller
+  newName: quay.io/konflux-ci/notification-service
+  newTag: latest
