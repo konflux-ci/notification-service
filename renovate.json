@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "quay.io/konflux-ci/*",
+        "registry.access.redhat.com/ubi9/ubi-minimal"
+      ],
+      "autoApprove": true,
+      "automerge": true
+    }
+  ]
+}
