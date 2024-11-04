@@ -60,12 +60,26 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	logger.Info("Reconciling PipelineRun", "Name", pipelineRun.Name)
-	if !IsPipelineRunEnded(pipelineRun) &&
-		!IsFinalizerExistInPipelineRun(pipelineRun, NotificationPipelineRunFinalizer) {
-		err = AddFinalizerToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
-		if err != nil {
-			logger.Error(err, "Failed to add finalizer", "pipelineRun", pipelineRun.Name)
-			return ctrl.Result{}, err
+
+	if !IsPipelineRunEnded(pipelineRun) {
+		if pipelineRun.GetDeletionTimestamp() != nil {
+			// If pipeline has been deleted
+			// Remove finalizer to allow deletion of the pipeline
+			logger.Info("Pipelinerun was deleted, removing finalizer", "Name", pipelineRun.Name)
+			err = RemoveFinalizerFromPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
+			if err != nil {
+				logger.Error(err, "Failed to remove finalizer", "pipelineRun", pipelineRun.Name)
+				return ctrl.Result{}, err
+			}
+		} else {
+			// If pipeline is running and was not deleted
+			// Add finalizer
+			logger.Info("Pipelinerun is running, Trying to add finalizer", "Name", pipelineRun.Name)
+			err = AddFinalizerToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
+			if err != nil {
+				logger.Error(err, "Failed to add finalizer", "pipelineRun", pipelineRun.Name)
+				return ctrl.Result{}, err
+			}
 		}
 	}
 
@@ -109,6 +123,7 @@ func (r *NotificationServiceReconciler) SetupWithManager(mgr ctrl.Manager) error
 			PushPipelineRunCreatedPredicate(),
 			PushPipelineRunEndedFinalizerPredicate(),
 			PushPipelineRunEndedNoAnnotationPredicate(),
+			PushPipelineRunDeletingPredicate(),
 		)).
 		Complete(r)
 }

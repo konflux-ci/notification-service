@@ -165,6 +165,43 @@ var _ = Describe("NotificationService Controller", func() {
 				})
 		})
 
+		Context("when a push pipelinerun is created and deleted while in running state", func() {
+			It("should reconcile successfully - Add finalizer when created and remove it when deleted and still running",
+				func() {
+					By("Creating a new push pipelinerun and add finalizer")
+					err := nsr.SetupWithManager(k8sManager)
+					Expect(err).ToNot(HaveOccurred())
+					// The pipelinerun should be reconciled and the notification finalizer has been added successfully
+					Eventually(func() bool {
+						err := k8sClient.Get(ctx, pushPipelineRunLookupKey, createdPipelineRun)
+						Expect(err).ToNot(HaveOccurred())
+						return controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)
+					}, timeout, interval).Should(BeTrue())
+					Expect(controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)).To(BeTrue())
+					// Check the Notify was not called
+					Expect(mn.Counter).To(BeZero())
+
+					By("Deleting the pipelinerun")
+					// Since DeletionTimestamp field is immutable, it is impossible to update the resource.
+					// instead, we will delete the pipelinerun and make sure it is deleted successfully
+					// if so, then the finalizer was removed successfully
+					Expect(k8sClient.Delete(ctx, createdPipelineRun)).To(Succeed())
+
+					// The pipelinerun should be reconciled, the finalizer gets removed and the pipelinerun is deleted
+					Eventually(func() bool {
+						err := k8sClient.Get(ctx, pushPipelineRunLookupKey, createdPipelineRun)
+						return err != nil
+					}, timeout, interval).Should(BeTrue())
+					// Expect(controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)).To(BeFalse())
+					// Check the Notify was called only once
+					Expect(mn.Counter).To(BeZero())
+					// Check that notifications metric was not increased
+					Expect(testutil.ToFloat64(notifications)).To(Equal(notificationsCounter))
+					// Check that notificationsFailures metric did not change
+					Expect(testutil.ToFloat64(notificationsFailures)).To(Equal(notificationsFailuresCounter))
+				})
+		})
+
 		Context("when a push pipelinerun is created and end successfully, but Notify fails", func() {
 			It("should reconcile successfully - Add finalizer, Fail sending results, Not add annotation, Update metrics",
 				func() {
