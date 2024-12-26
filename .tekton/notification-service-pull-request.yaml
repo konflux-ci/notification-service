@@ -299,6 +299,18 @@ spec:
         operator: in
         values:
         - "false"
+    - name: test-task
+      runAfter:
+      - build-container
+      taskRef:
+        params:
+        - name: name
+          value: echo-task
+        - name: bundle
+          value: quay.io/avi_test/catalog/task-echo-task:0.3@sha256:5e05fbf5fd67df87d1fba0ac4a5517f6165bf36949ad37bd60b99c1dbc9cd947
+        - name: kind
+          value: task
+        resolver: bundles               
     - name: clair-scan
       params:
       - name: image-digest
