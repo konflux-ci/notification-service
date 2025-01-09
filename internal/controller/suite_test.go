@@ -35,6 +35,7 @@ import (
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -146,11 +147,15 @@ var _ = BeforeEach(func() {
 		and it'd be easy to make mistakes.
 		https://github.com/kubernetes-sigs/kubebuilder/blob/de1cc60900b896b2195e403a40c976a892df4921/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/suite_test.go#L136
 	*/
+	// Skip controller name validation for the unit tests
 	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: clientsetscheme.Scheme,
+		Controller: config.Controller{
+			SkipNameValidation: &[]bool{true}[0],
+		},
 	})
-	Expect(err).ToNot(HaveOccurred())
 
+	Expect(err).ToNot(HaveOccurred())
 	// Create a mock of notifier
 	mn = &MockNotifier{shouldThroughError: false}
 	nsr = &NotificationServiceReconciler{
