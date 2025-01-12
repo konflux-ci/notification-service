@@ -38,7 +38,8 @@ spec:
       - command:
         - /manager
         args:
-        - --health-probe-bind-address=:8081              
+        - --health-probe-bind-address=:8081
+        - --metrics-secure=true         
         image: controller:latest
         name: manager
         volumeMounts:
