@@ -14,7 +14,7 @@ endif
 # Be aware that the target commands are only tested with Docker which is
 # scaffolded by default. However, you might want to replace it to use other
 # tools. (i.e. podman)
-CONTAINER_TOOL ?= docker
+CONTAINER_TOOL ?= podman
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -161,7 +161,7 @@ GOLANGCI_LINT = $(LOCALBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
 KUSTOMIZE_VERSION ?= v5.4.1
 CONTROLLER_TOOLS_VERSION ?= v0.15.0
 ENVTEST_VERSION ?= release-0.18
-GOLANGCI_LINT_VERSION ?= v1.57.2
+GOLANGCI_LINT_VERSION ?= v1.60.1
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.

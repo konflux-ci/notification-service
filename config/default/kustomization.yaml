@@ -16,6 +16,10 @@ resources:
 # Enable prometheus monitor
 - ../prometheus
 
-patchesStrategicMerge:
-# This patch inject a sidecar container which is a HTTP proxy for the controller manager
-- manager_auth_proxy_patch.yaml
+- metrics_service.yaml
+
+patches:
+- path: manager_metrics_patch.yaml
+  target:
+    name: controller-manager
+    kind: Deployment
