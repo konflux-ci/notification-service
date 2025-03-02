@@ -13,7 +13,7 @@ require (
 	github.com/tektoncd/pipeline v0.60.2
 	k8s.io/apimachinery v0.32.2
 	k8s.io/client-go v0.32.2
-	knative.dev/pkg v0.0.0-20250214140553-ae2c6bcc1f59
+	knative.dev/pkg v0.0.0-20250226145529-0372c089c78f
 	sigs.k8s.io/controller-runtime v0.19.4
 
 )
@@ -83,7 +83,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20241029153458-d1b30febd7db // indirect
 	github.com/google/uuid v1.6.0 // indirect
