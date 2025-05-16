@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:9.6-1745588370 AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:9.6-1747333074 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
