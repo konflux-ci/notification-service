@@ -8,8 +8,8 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.4
 	github.com/go-logr/logr v1.4.3
 	github.com/konflux-ci/operator-toolkit v0.0.0-20240402130556-ef6dcbeca69d
-	github.com/onsi/ginkgo/v2 v2.22.2
-	github.com/onsi/gomega v1.36.2
+	github.com/onsi/ginkgo/v2 v2.23.3
+	github.com/onsi/gomega v1.37.0
 	github.com/tektoncd/pipeline v0.70.0
 	k8s.io/apimachinery v0.32.2
 	k8s.io/client-go v0.32.2
