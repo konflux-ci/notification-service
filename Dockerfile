@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:9.6-1753221510 AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:9.6-1753853351 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -23,7 +23,7 @@ COPY pkg/notifier/ pkg/notifier/
 # by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1752587672
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1753762263
 
 COPY LICENSE /licenses
 COPY --from=builder /opt/app-root/src/manager /
