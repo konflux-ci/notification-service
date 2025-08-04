@@ -1,12 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "automerge": true,
   "packageRules": [
     {
       "matchPackageNames": [
         "quay.io/konflux-ci/*",
         "registry.access.redhat.com/ubi9/ubi-minimal"
       ],
-      "autoApprove": true,
+      "automerge": true
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["patch", "minor"],
       "automerge": true
     }
   ]
