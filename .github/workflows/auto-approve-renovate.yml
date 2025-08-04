@@ -16,17 +16,37 @@ jobs:
     steps:
       - name: Wait for all checks to complete
         uses: lewagon/wait-on-check-action@v1.3.4
+        id: wait-for-checks
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           running-workflow-name: 'auto-approve'
 
-      - name: Auto-approve after all checks pass
+      - name: Debug check status
+        run: |
+          echo "Check status: ${{ steps.wait-for-checks.outputs.status }}"
+          echo "All outputs: ${{ toJson(steps.wait-for-checks.outputs) }}"
+
+      - name: Auto-approve ONLY if all checks pass
+        if: ${{ steps.wait-for-checks.outputs.status == 'success' }}
         uses: hmarr/auto-approve-action@v4
         with:
-          github-token: ${{ secrets.AUTO_APPROVE_PAT || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           review-message: |
             Auto-approving Renovate PR after all CI checks passed ✅
             
-            This approval enables automerge for dependency updates. 
+            Check status: ${{ steps.wait-for-checks.outputs.status }}
+            This approval enables automerge for dependency updates.
+
+      - name: Comment if checks failed
+        if: ${{ steps.wait-for-checks.outputs.status != 'success' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Auto-approval skipped - Some CI checks failed or are incomplete.\n\nCheck status: ${{ steps.wait-for-checks.outputs.status }}'
+            }); 
