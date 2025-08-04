@@ -11,7 +11,7 @@ permissions:
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'renovate[bot]' || github.actor == 'renovate' }}
+    if: ${{ github.event.pull_request.user.login == 'renovate[bot]' }}
     
     steps:
       - name: Wait for CI checks to complete
