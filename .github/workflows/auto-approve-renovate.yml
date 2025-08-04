@@ -14,47 +14,19 @@ jobs:
     if: ${{ github.event.pull_request.user.login == 'renovate[bot]' }}
     
     steps:
-      - name: Wait for CI checks to complete
-        uses: fountainhead/action-wait-for-check@v1.2.0
-        id: wait-for-ci
+      - name: Wait for all checks to complete
+        uses: lewagon/wait-on-check-action@v1.3.4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          checkName: "Go Tests / build" # Match your CI check name
           ref: ${{ github.event.pull_request.head.sha }}
-          timeoutSeconds: 600
-          intervalSeconds: 10
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          running-workflow-name: 'auto-approve'
 
-      - name: Wait for Lint checks to complete  
-        uses: fountainhead/action-wait-for-check@v1.2.0
-        id: wait-for-lint
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          checkName: "Go Lint / build" # Match your lint check name
-          ref: ${{ github.event.pull_request.head.sha }}
-          timeoutSeconds: 600
-          intervalSeconds: 10
-
-      - name: Auto-approve if CI passes
-        if: ${{ steps.wait-for-ci.outputs.conclusion == 'success' && steps.wait-for-lint.outputs.conclusion == 'success' }}
+      - name: Auto-approve after all checks pass
         uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.AUTO_APPROVE_PAT || secrets.GITHUB_TOKEN }}
           review-message: |
-            Auto-approving Renovate PR after successful CI checks ✅
+            Auto-approving Renovate PR after all CI checks passed ✅
             
-            - Go Tests: ${{ steps.wait-for-ci.outputs.conclusion }}
-            - Go Lint: ${{ steps.wait-for-lint.outputs.conclusion }}
-            
-            This approval enables automerge for dependency updates.
-
-      - name: Comment on failure
-        if: ${{ steps.wait-for-ci.outputs.conclusion != 'success' || steps.wait-for-lint.outputs.conclusion != 'success' }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ Auto-approval skipped - CI checks failed:\n- Go Tests: ${{ steps.wait-for-ci.outputs.conclusion }}\n- Go Lint: ${{ steps.wait-for-lint.outputs.conclusion }}'
-            }); 
+            This approval enables automerge for dependency updates. 
