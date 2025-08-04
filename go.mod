@@ -18,7 +18,7 @@ require (
 
 )
 
-replace github.com/google/cel-go => github.com/google/cel-go v0.22.0
+replace github.com/google/cel-go => github.com/google/cel-go v0.26.0
 
 require (
 	cel.dev/expr v0.24.0 // indirect
