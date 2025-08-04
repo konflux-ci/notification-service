@@ -19,7 +19,7 @@ jobs:
         id: wait-for-ci
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          checkName: "Go Tests" # Match your CI check name
+          checkName: "Go Tests / build (pull_request)" # Match your CI check name
           ref: ${{ github.event.pull_request.head.sha }}
           timeoutSeconds: 600
           intervalSeconds: 10
@@ -29,7 +29,7 @@ jobs:
         id: wait-for-lint
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          checkName: "Go Lint" # Match your lint check name
+          checkName: "Go Lint / build (pull_request)" # Match your lint check name
           ref: ${{ github.event.pull_request.head.sha }}
           timeoutSeconds: 600
           intervalSeconds: 10
