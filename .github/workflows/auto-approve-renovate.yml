@@ -41,7 +41,7 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           review-message: |
-            Auto-approving Renovate PR after all CI checks passed ✅
+            Auto-approving Renovate PR after all CI checks passed.
             
             Check status: ${{ steps.wait-for-checks.outcome }}
             This approval enables automerge for dependency updates.
@@ -55,5 +55,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ Auto-approval skipped - Some CI checks failed or are incomplete.\n\nCheck status: ${{ steps.wait-for-checks.outcome }}'
+              body: 'Auto-approval skipped - Some CI checks failed or are incomplete.\n\nCheck status: ${{ steps.wait-for-checks.outcome }}'
             }); 
