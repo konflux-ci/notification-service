@@ -1,18 +1,66 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "automerge": true,
-  "postUpdateOptions": ["gomodTidy"],
+  "extends": ["github>konflux-ci/mintmaker//config/renovate/renovate.json"],
+  "automergeStrategy": "merge-commit",
+  "platformAutomerge": true,
   "packageRules": [
+    {
+      "description": "Auto-merge patch updates for Konflux components",
+      "matchUpdateTypes": ["patch", "digest"],
+      "matchPackagePatterns": ["^quay.io/konflux-ci/"],
+      "automerge": true,
+      "autoApprove": true
+    },
+    {
+      "description": "Group Tekton bundle updates together",
+      "groupName": "tekton-bundles",
+      "matchPackagePatterns": ["quay.io/konflux-ci/tekton-catalog/"],
+      "automerge": true,
+      "autoApprove": true
+    },
+    {
+      "description": "Group container base image updates",
+      "groupName": "container-images",
+      "matchPackagePatterns": [
+        "registry.access.redhat.com/",
+        "registry.fedoraproject.org/"
+      ],
+      "matchUpdateTypes": ["patch", "digest"],
+      "automerge": true,
+      "autoApprove": true
+    },
+    {
+      "description": "Auto-merge Go toolchain patch updates only",
+      "matchPackageNames": ["go"],
+      "matchDatasources": ["golang-version"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "autoApprove": true
+    },
+    {
+      "description": "Group Kubernetes ecosystem dependencies to prevent version conflicts",
+      "groupName": "kubernetes-ecosystem",
+      "matchPackagePatterns": [
+        "^k8s.io/",
+        "^sigs.k8s.io/"
+      ],
+      "matchDatasources": ["go"],
+      "automerge": false,
+      "autoApprove": false
+    },
+    {
+      "description": "Group Go dependencies for manual review",
+      "groupName": "go-dependencies",
+      "matchDatasources": ["go"],
+      "automerge": false,
+      "autoApprove": false
+    },
     {
       "matchPackageNames": [
         "quay.io/konflux-ci/*",
         "registry.access.redhat.com/ubi9/ubi-minimal"
       ],
-      "automerge": true
-    },
-    {
-      "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["patch", "minor"],
+      "autoApprove": true,
       "automerge": true
     }
   ]
