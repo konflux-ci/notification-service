@@ -3,6 +3,8 @@
   "extends": ["github>konflux-ci/mintmaker//config/renovate/renovate.json"],
   "automergeStrategy": "merge-commit",
   "platformAutomerge": true,
+  "ignoreTests": true,
+
   "packageRules": [
     {
       "description": "Auto-merge patch updates for Konflux components",
