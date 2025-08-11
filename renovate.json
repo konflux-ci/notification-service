@@ -3,6 +3,7 @@
   "extends": ["github>konflux-ci/mintmaker//config/renovate/renovate.json"],
   "automergeStrategy": "merge-commit",
   "platformAutomerge": true,
+  "ignoreTests": true,
   "postUpdateOptions": ["gomodTidy"],
   "packageRules": [
     {

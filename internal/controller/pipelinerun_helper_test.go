@@ -248,10 +248,10 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 					ResolverRef: tektonv1.ResolverRef{
 						Resolver: "bundle",
 						Params: tektonv1.Params{
-							{Name: "bundle",
+							tektonv1.Param{Name: "bundle",
 								Value: tektonv1.ParamValue{Type: "string", StringVal: "test/example:test"},
 							},
-							{Name: "name",
+							tektonv1.Param{Name: "name",
 								Value: tektonv1.ParamValue{Type: "string", StringVal: "test-task"},
 							},
 						},
