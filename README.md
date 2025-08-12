@@ -187,3 +187,4 @@ $ IMG=quay.io/user/release:my-tag make docker-push
 
 To test the code, run `make test`. This command will fetch all the required dependencies and test the code. The
 test coverage will be reported at the end, once all the tests have been executed.
+<!-- Simple comment to trigger MintMaker -->
