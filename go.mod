@@ -2,7 +2,7 @@ module github.com/konflux-ci/notification-service
 
 go 1.23.0
 
-toolchain go1.23.4
+toolchain go1.25.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.6
@@ -15,7 +15,6 @@ require (
 	k8s.io/client-go v0.32.2
 	knative.dev/pkg v0.0.0-20250331013832-c5a13b15ccdb
 	sigs.k8s.io/controller-runtime v0.20.2
-
 )
 
 replace github.com/google/cel-go => github.com/google/cel-go v0.22.0
@@ -62,7 +61,6 @@ require (
 	k8s.io/apiserver v0.32.1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.33.0 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-
 )
 
 require (
