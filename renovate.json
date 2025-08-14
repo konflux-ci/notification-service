@@ -1,11 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>konflux-ci/mintmaker//config/renovate/renovate.json"],
   "schedule": ["at any time"],
   "prConcurrentLimit": 30,
   "automergeStrategy": "merge-commit",
   "platformAutomerge": true,
   "packageRules": [
+    {
+      "matchManagers": ["dockerfile", "gomod", "github-actions", "tekton"],
+      "schedule": ["at any time"]
+    },
     {
       "description": "Auto-merge patch updates for Konflux components",
       "matchUpdateTypes": ["patch", "digest"],
