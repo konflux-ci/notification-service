@@ -57,6 +57,12 @@
       "description": "Group Go dependencies for manual review",
       "groupName": "go-dependencies",
       "matchDatasources": ["go"],
+      "excludePackageNames": [
+        "github.com/google/cel-go",
+        "github.com/konflux-ci/operator-toolkit",
+        "knative.dev/pkg",
+        "github.com/tektoncd/pipeline"
+      ],
       "automerge": false,
       "autoApprove": false
     },
