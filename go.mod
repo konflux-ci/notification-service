@@ -56,16 +56,16 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	gomodules.xyz/jsonpatch/v3 v3.0.1 // indirect
+	gopkg.in/evanphx/json-patch.v5 v5.9.11 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiserver v0.32.1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.33.0 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
 
 )
 
