@@ -43,28 +43,10 @@
       "autoApprove": true
     },
     {
-      "description": "Group Kubernetes ecosystem dependencies to prevent version conflicts",
-      "groupName": "kubernetes-ecosystem",
-      "matchPackagePatterns": [
-        "^k8s.io/",
-        "^sigs.k8s.io/"
-      ],
+      "description": "Auto-merge all Go dependencies (ungrouped)",
       "matchDatasources": ["go"],
-      "automerge": false,
-      "autoApprove": false
-    },
-    {
-      "description": "Group Go dependencies for manual review",
-      "groupName": "go-dependencies",
-      "matchDatasources": ["go"],
-      "excludePackageNames": [
-        "github.com/google/cel-go",
-        "github.com/konflux-ci/operator-toolkit",
-        "knative.dev/pkg",
-        "github.com/tektoncd/pipeline"
-      ],
-      "automerge": false,
-      "autoApprove": false
+      "automerge": true,
+      "autoApprove": true
     },
     {
       "matchPackageNames": [
