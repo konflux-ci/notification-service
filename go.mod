@@ -10,7 +10,7 @@ require (
 	github.com/konflux-ci/operator-toolkit v0.0.0-20250903120054-1a071261f50b
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
-	github.com/tektoncd/pipeline v1.5.0
+	github.com/tektoncd/pipeline v1.6.0
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
 	knative.dev/pkg v0.0.0-20250415155312-ed3e2158b883
