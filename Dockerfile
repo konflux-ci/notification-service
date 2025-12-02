@@ -29,4 +29,15 @@ COPY LICENSE /licenses
 COPY --from=builder /opt/app-root/src/manager /
 USER 65532:65532
 
+LABEL name="Konflux Notification Service"
+LABEL description="Konflux Notification Service"
+LABEL com.redhat.component="konflux-notification-service-container"
+LABEL io.k8s.description="Konflux Notification Service"
+LABEL io.k8s.display-name="konflux-notification-service"
+LABEL version="1.0"
+LABEL release="1"
+LABEL vendor="Red Hat, Inc."
+LABEL distribution-scope="public"
+LABEL url="https://github.com/konflux-ci/notification-service"
+
 ENTRYPOINT ["/manager"]
