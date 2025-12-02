@@ -13,7 +13,7 @@ require (
 	github.com/tektoncd/pipeline v1.6.0
 	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.2
-	knative.dev/pkg v0.0.0-20250415155312-ed3e2158b883
+	knative.dev/pkg e853b1d1d6bb
 	sigs.k8s.io/controller-runtime v0.22.4
 )
 
