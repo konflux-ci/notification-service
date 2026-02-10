@@ -2,7 +2,7 @@ module github.com/konflux-ci/notification-service
 
 go 1.24.9
 
-toolchain go1.25.3
+toolchain go1.26.0
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.1
