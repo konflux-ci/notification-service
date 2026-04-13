@@ -15,7 +15,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.4
 )
 
-replace github.com/google/cel-go => github.com/google/cel-go v0.27.0
+replace github.com/google/cel-go => github.com/google/cel-go v0.28.0
 
 require (
 	cel.dev/expr v0.25.1 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/go-openapi/swag/typeutils v0.25.5 // indirect
 	github.com/go-openapi/swag/yamlutils v0.25.5 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/cel-go v0.27.0 // indirect
+	github.com/google/cel-go v0.28.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
