@@ -39,16 +39,21 @@ spec:
         - /manager
         args:
         - --health-probe-bind-address=:8081
-        - --metrics-secure=true         
+        - --metrics-secure=true
         image: controller:latest
         name: manager
+        env:
+        - name: NOTIFICATION_FILTER_LABELS
+          value: "pipelinesascode.tekton.dev/event-type=push"
+        - name: NOTIFICATION_FILTER_ANNOTATIONS
+          value: ""
         volumeMounts:
         - name: vol-secret
           mountPath: /.aws
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
-          runAsNonRoot: true          
+          runAsNonRoot: true
           capabilities:
             drop:
             - "ALL"
