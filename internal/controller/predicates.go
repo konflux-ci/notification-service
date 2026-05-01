@@ -5,12 +5,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-// PushPipelineRunCreatedPredicate returns a predicate which filters out all objects except
-// Push PipelineRuns that have just created
-func PushPipelineRunCreatedPredicate() predicate.Predicate {
+// PipelineRunCreatedPredicate returns a predicate which filters out all objects except
+// PipelineRuns matching the configured filters that have just been created
+func PipelineRunCreatedPredicate() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(createEvent event.CreateEvent) bool {
-			return IsPushPipelineRun(createEvent.Object)
+			return ShouldProcessPipelineRun(createEvent.Object)
 		},
 		DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
 			return false
@@ -24,9 +24,9 @@ func PushPipelineRunCreatedPredicate() predicate.Predicate {
 	}
 }
 
-// PushPipelineRunEndedNoAnnotationPredicate returns a predicate which filters out all objects except
-// Push PipelineRuns which have finished and has no notification annotation
-func PushPipelineRunEndedNoAnnotationPredicate() predicate.Predicate {
+// PipelineRunEndedNoAnnotationPredicate returns a predicate which filters out all objects except
+// matching PipelineRuns which have finished and have no notification annotation
+func PipelineRunEndedNoAnnotationPredicate() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(createEvent event.CreateEvent) bool {
 			return false
@@ -38,16 +38,16 @@ func PushPipelineRunEndedNoAnnotationPredicate() predicate.Predicate {
 			return false
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return (IsPushPipelineRun(e.ObjectNew) &&
+			return (ShouldProcessPipelineRun(e.ObjectNew) &&
 				IsPipelineRunEnded(e.ObjectNew) &&
 				!IsAnnotationExistInPipelineRun(e.ObjectNew, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue))
 		},
 	}
 }
 
-// PushPipelineRunEndedFinalizerPredicate returns a predicate which filters out all objects except
-// Push PipelineRuns which have finished and has finalizer
-func PushPipelineRunEndedFinalizerPredicate() predicate.Predicate {
+// PipelineRunEndedFinalizerPredicate returns a predicate which filters out all objects except
+// matching PipelineRuns which have finished and have a finalizer
+func PipelineRunEndedFinalizerPredicate() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(createEvent event.CreateEvent) bool {
 			return false
@@ -60,15 +60,15 @@ func PushPipelineRunEndedFinalizerPredicate() predicate.Predicate {
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			return (IsFinalizerExistInPipelineRun(e.ObjectNew, NotificationPipelineRunFinalizer) &&
-				IsPushPipelineRun(e.ObjectNew) &&
+				ShouldProcessPipelineRun(e.ObjectNew) &&
 				IsPipelineRunEnded(e.ObjectNew))
 		},
 	}
 }
 
-// BuildPipelineRunDeletingPredicate returns a predicate which filters out all objects except
-// Build PipelineRuns which have been updated to deleting
-func PushPipelineRunDeletingPredicate() predicate.Predicate {
+// PipelineRunDeletingPredicate returns a predicate which filters out all objects except
+// matching PipelineRuns which have been updated to deleting
+func PipelineRunDeletingPredicate() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(createEvent event.CreateEvent) bool {
 			return false
@@ -80,7 +80,7 @@ func PushPipelineRunDeletingPredicate() predicate.Predicate {
 			return false
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			if IsPushPipelineRun(e.ObjectNew) &&
+			if ShouldProcessPipelineRun(e.ObjectNew) &&
 				e.ObjectOld.GetDeletionTimestamp() == nil &&
 				e.ObjectNew.GetDeletionTimestamp() != nil {
 				return true

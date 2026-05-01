@@ -153,9 +153,9 @@ var _ = Describe("NotificationService Controller", func() {
 					Eventually(func() bool {
 						err := k8sClient.Get(ctx, pushPipelineRunLookupKey, createdPipelineRun)
 						Expect(err).ToNot(HaveOccurred())
-						return metadata.HasAnnotationWithValue(createdPipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue)
+						return metadata.HasAnnotationWithValue(createdPipelineRun, NotificationPipelineRunAnnotation, NotificationPipelineRunAnnotationValue) &&
+							!controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)
 					}, timeout, interval).Should(BeTrue())
-					Expect(controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)).To(BeFalse())
 					// Check the Notify was called only once
 					Expect(mn.Counter).To(Equal(1))
 					// Check that notifications metric increased by 1
@@ -417,6 +417,67 @@ var _ = Describe("NotificationService Controller", func() {
 			})
 		})
 	})
+	Describe("Testing annotation-based filtering", func() {
+		const annotatedPipelineRunName = "annotated-pipelinerun-sample"
+		annotatedPipelineRunLookupKey := types.NamespacedName{Name: annotatedPipelineRunName, Namespace: namespace}
+
+		Context("when a PipelineRun matches the annotation filter", func() {
+			It("should reconcile and process the PipelineRun", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_ANNOTATIONS", "custom-build-trigger")
+
+				err := nsr.SetupWithManager(k8sManager)
+				Expect(err).ToNot(HaveOccurred())
+
+				notificationsCounter = testutil.ToFloat64(notifications)
+
+				annotatedPipelineRun := &tektonv1.PipelineRun{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      annotatedPipelineRunName,
+						Namespace: namespace,
+						Annotations: map[string]string{
+							"custom-build-trigger": "https://ci.example.com/build/123",
+						},
+						Labels: map[string]string{
+							"appstudio.openshift.io/application": "test-app",
+						},
+					},
+					Spec: tektonv1.PipelineRunSpec{
+						PipelineRef: &tektonv1.PipelineRef{},
+					},
+					Status: tektonv1.PipelineRunStatus{
+						PipelineRunStatusFields: tektonv1.PipelineRunStatusFields{
+							StartTime:      &metav1.Time{Time: time.Now()},
+							CompletionTime: &metav1.Time{Time: time.Now().Add(5 * time.Minute)},
+						},
+						Status: v1.Status{
+							Conditions: v1.Conditions{
+								apis.Condition{
+									Message: "Tasks Completed: 3 (Failed: 0, Cancelled 0), Incomplete: 10, Skipped:1",
+									Reason:  "Running",
+									Status:  "Unknown",
+									Type:    apis.ConditionSucceeded,
+								},
+							},
+						},
+					},
+				}
+				err = k8sClient.Create(ctx, annotatedPipelineRun)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, annotatedPipelineRunLookupKey, createdPipelineRun)
+					return err == nil
+				}, timeout, interval).Should(BeTrue())
+
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, annotatedPipelineRunLookupKey, createdPipelineRun)
+					Expect(err).ToNot(HaveOccurred())
+					return controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)
+				}, timeout, interval).Should(BeTrue())
+			})
+		})
+	})
+
 	AfterEach(func() {
 		err := k8sClient.Delete(ctx, createdPipelineRun)
 		Expect(err == nil || errors.IsNotFound(err)).To(BeTrue())

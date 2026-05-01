@@ -120,10 +120,10 @@ func (r *NotificationServiceReconciler) SetupWithManager(mgr ctrl.Manager) error
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tektonv1.PipelineRun{}).
 		WithEventFilter(predicate.Or(
-			PushPipelineRunCreatedPredicate(),
-			PushPipelineRunEndedFinalizerPredicate(),
-			PushPipelineRunEndedNoAnnotationPredicate(),
-			PushPipelineRunDeletingPredicate(),
+			PipelineRunCreatedPredicate(),
+			PipelineRunEndedFinalizerPredicate(),
+			PipelineRunEndedNoAnnotationPredicate(),
+			PipelineRunDeletingPredicate(),
 		)).
 		Complete(r)
 }
