@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/konflux-ci/operator-toolkit/metadata"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
 	"knative.dev/pkg/apis"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -133,14 +136,45 @@ func IsAnnotationExistInPipelineRun(object client.Object, annotation string, ann
 	return false
 }
 
-// IsPushPipelineRun checks if an object is a push pipelinerun
-// Return true if yes, otherwise return false
-// If the object passed to this function is not a PipelineRun, the function will return false.
-func IsPushPipelineRun(object client.Object) bool {
-	if pipelineRun, ok := object.(*tektonv1.PipelineRun); ok {
-		return metadata.HasLabelWithValue(pipelineRun,
-			PipelineRunTypeLabel,
-			PushPipelineRunTypeValue)
+// ShouldProcessPipelineRun checks whether a PipelineRun matches the filters configured via
+// NOTIFICATION_FILTER_LABELS and NOTIFICATION_FILTER_ANNOTATIONS. Defaults to push-only when both are unset.
+func ShouldProcessPipelineRun(object client.Object) bool {
+	pipelineRun, ok := object.(*tektonv1.PipelineRun)
+	if !ok {
+		return false
+	}
+
+	filterLabels := os.Getenv("NOTIFICATION_FILTER_LABELS")
+	filterAnnotations := os.Getenv("NOTIFICATION_FILTER_ANNOTATIONS")
+
+	if filterLabels == "" && filterAnnotations == "" {
+		return metadata.HasLabelWithValue(pipelineRun, PipelineRunTypeLabel, PushPipelineRunTypeValue)
+	}
+
+	if filterLabels != "" {
+		labelPairs := strings.Split(filterLabels, ",")
+		for _, pair := range labelPairs {
+			pair = strings.TrimSpace(pair)
+			parts := strings.SplitN(pair, "=", 2)
+			if len(parts) != 2 {
+				ctrl.Log.Info("Ignoring malformed label filter entry, expected key=value format", "entry", pair)
+				continue
+			}
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+			if metadata.HasLabelWithValue(pipelineRun, key, value) {
+				return true
+			}
+		}
+	}
+
+	if filterAnnotations != "" {
+		for _, key := range strings.Split(filterAnnotations, ",") {
+			key = strings.TrimSpace(key)
+			if metadata.HasAnnotation(pipelineRun, key) {
+				return true
+			}
+		}
 	}
 
 	return false
