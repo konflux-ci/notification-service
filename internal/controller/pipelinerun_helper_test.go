@@ -90,8 +90,8 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 			},
 		}
 		Context("when a push pipelinerun ends successfully and has results", func() {
-			It("IsPushPipelineRun should return true", func() {
-				got := IsPushPipelineRun(testTruePipelineRun)
+			It("ShouldProcessPipelineRun should return true", func() {
+				got := ShouldProcessPipelineRun(testTruePipelineRun)
 				Expect(got).To(BeTrue())
 			})
 			It("IsAnnotationExistInPipelineRun should return true", func() {
@@ -189,8 +189,8 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 			},
 		}
 		Context("when a pull_request pipelinerun is created, Still running and has no results", func() {
-			It("IsPushPipelineRun should return false", func() {
-				got := IsPushPipelineRun(testFalsePipelineRun)
+			It("ShouldProcessPipelineRun should return false", func() {
+				got := ShouldProcessPipelineRun(testFalsePipelineRun)
 				Expect(got).To(BeFalse())
 			})
 			It("IsAnnotationExistInPipelineRun shouldreturn false", func() {
@@ -260,8 +260,8 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 			},
 		}
 		Context("When non pipelinerun object created", func() {
-			It("IsPushPipelineRun should return false", func() {
-				got := IsPushPipelineRun(notPipelineRun)
+			It("ShouldProcessPipelineRun should return false", func() {
+				got := ShouldProcessPipelineRun(notPipelineRun)
 				Expect(got).To(BeFalse())
 			})
 			It("IsAnnotationExistInPipelineRun should return false", func() {
@@ -515,6 +515,133 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 			It("RemoveFinalizerFromPipelineRun should return an error", func() {
 				err := RemoveFinalizerFromPipelineRun(ctx, testPipelineRun, fakeErrorNsr, NotificationPipelineRunFinalizer)
 				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
+
+	Describe("ShouldProcessPipelineRun filtering tests", func() {
+		var (
+			pushPipelineRun,
+			annotatedPipelineRun,
+			noPipelineRun *tektonv1.PipelineRun
+		)
+
+		BeforeEach(func() {
+			// PipelineRun with push label (default case)
+			pushPipelineRun = &tektonv1.PipelineRun{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "push-pipeline",
+					Namespace: namespace,
+					Labels: map[string]string{
+						PipelineRunTypeLabel: PushPipelineRunTypeValue,
+					},
+				},
+			}
+
+			// PipelineRun with custom-build-trigger annotation
+			annotatedPipelineRun = &tektonv1.PipelineRun{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "annotated-pipeline",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"custom-build-trigger": "https://ci.example.com/build/123",
+					},
+				},
+			}
+
+			// PipelineRun with no relevant labels or annotations
+			noPipelineRun = &tektonv1.PipelineRun{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "no-filter-pipeline",
+					Namespace: namespace,
+				},
+			}
+		})
+
+		Context("Default filtering (no env vars set)", func() {
+			It("should process push PipelineRuns", func() {
+				Expect(ShouldProcessPipelineRun(pushPipelineRun)).To(BeTrue())
+			})
+
+			It("should not process annotated PipelineRuns without push label", func() {
+				Expect(ShouldProcessPipelineRun(annotatedPipelineRun)).To(BeFalse())
+			})
+
+			It("should not process PipelineRuns without event-type label", func() {
+				Expect(ShouldProcessPipelineRun(noPipelineRun)).To(BeFalse())
+			})
+		})
+
+		Context("Label filtering with NOTIFICATION_FILTER_LABELS", func() {
+			It("should process push PipelineRuns when filter matches", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_LABELS", "pipelinesascode.tekton.dev/event-type=push")
+				Expect(ShouldProcessPipelineRun(pushPipelineRun)).To(BeTrue())
+			})
+
+			It("should not process PipelineRuns without matching label", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_LABELS", "pipelinesascode.tekton.dev/event-type=push")
+				Expect(ShouldProcessPipelineRun(annotatedPipelineRun)).To(BeFalse())
+			})
+		})
+
+		Context("Annotation filtering with NOTIFICATION_FILTER_ANNOTATIONS", func() {
+			It("should process PipelineRuns when annotation filter matches", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_ANNOTATIONS", "custom-build-trigger")
+				Expect(ShouldProcessPipelineRun(annotatedPipelineRun)).To(BeTrue())
+			})
+
+			It("should not process PipelineRuns without matching annotation", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_ANNOTATIONS", "custom-build-trigger")
+				Expect(ShouldProcessPipelineRun(pushPipelineRun)).To(BeFalse())
+			})
+
+			It("should handle multiple annotation filters", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_ANNOTATIONS", "custom-build-trigger,custom-annotation")
+				Expect(ShouldProcessPipelineRun(annotatedPipelineRun)).To(BeTrue())
+			})
+		})
+
+		Context("Combined label and annotation filtering", func() {
+			It("should process PipelineRuns matching either label or annotation", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_LABELS", "pipelinesascode.tekton.dev/event-type=push")
+				GinkgoT().Setenv("NOTIFICATION_FILTER_ANNOTATIONS", "custom-build-trigger")
+
+				Expect(ShouldProcessPipelineRun(pushPipelineRun)).To(BeTrue())
+				Expect(ShouldProcessPipelineRun(annotatedPipelineRun)).To(BeTrue())
+			})
+
+			It("should not process PipelineRuns matching neither filter", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_LABELS", "pipelinesascode.tekton.dev/event-type=push")
+				GinkgoT().Setenv("NOTIFICATION_FILTER_ANNOTATIONS", "custom-build-trigger")
+
+				Expect(ShouldProcessPipelineRun(noPipelineRun)).To(BeFalse())
+			})
+		})
+
+		Context("Edge cases", func() {
+			It("should return false for non-PipelineRun objects", func() {
+				taskRun := &tektonv1.TaskRun{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-taskrun",
+					},
+				}
+				Expect(ShouldProcessPipelineRun(taskRun)).To(BeFalse())
+			})
+
+			It("should handle empty filter values gracefully", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_LABELS", "")
+				GinkgoT().Setenv("NOTIFICATION_FILTER_ANNOTATIONS", "")
+				Expect(ShouldProcessPipelineRun(pushPipelineRun)).To(BeTrue())
+			})
+
+			It("should handle whitespace in filter configuration", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_LABELS", " pipelinesascode.tekton.dev/event-type=push ")
+				Expect(ShouldProcessPipelineRun(pushPipelineRun)).To(BeTrue())
+			})
+
+			It("should return false when label filter has no '=' separator", func() {
+				GinkgoT().Setenv("NOTIFICATION_FILTER_LABELS", "badfilter")
+				Expect(ShouldProcessPipelineRun(pushPipelineRun)).To(BeFalse())
 			})
 		})
 	})

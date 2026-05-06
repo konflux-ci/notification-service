@@ -148,6 +148,19 @@ be sent to and the `region` of the AWS account.
 | NOTIFICATION_REGION | define the AWS region to use
 | NOTIFICATION_TOPIC_ARN | the topic arn the messages will be sent to
 
+## Configure PipelineRun Filtering
+
+By default, the controller only processes PipelineRuns with the label `pipelinesascode.tekton.dev/event-type=push`. 
+This can be customized using the following optional environment variables:
+
+| Name | Description | Example |
+| -- | -- | -- |
+| NOTIFICATION_FILTER_LABELS | Comma-separated list of label key=value pairs to filter PipelineRuns | `pipelinesascode.tekton.dev/event-type=push` |
+| NOTIFICATION_FILTER_ANNOTATIONS | Comma-separated list of annotation keys to filter PipelineRuns by presence | `my-custom-annotation` |
+
+**Note:** If both variables are unset, the controller defaults to filtering by the label key-value pair `pipelinesascode.tekton.dev/event-type=push`. 
+If either variable is set, only PipelineRuns matching the configured filters will be processed.
+
 ## Running, building and testing the controller
 
 This controller provides a [Makefile](Makefile) to run all the usual development tasks. This file can be used by cloning
