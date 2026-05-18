@@ -68,6 +68,10 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 			logger.Info("Pipelinerun was deleted, removing finalizer", "Name", pipelineRun.Name)
 			err = RemoveFinalizerFromPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
 			if err != nil {
+				if errors.IsConflict(err) {
+					logger.Info("Conflict removing finalizer on deleted run, will retry on re-fetch", "pipelineRun", pipelineRun.Name)
+					return ctrl.Result{}, err
+				}
 				logger.Error(err, "Failed to remove finalizer", "pipelineRun", pipelineRun.Name)
 				return ctrl.Result{}, err
 			}
@@ -77,6 +81,10 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 			logger.Info("Pipelinerun is running, Trying to add finalizer", "Name", pipelineRun.Name)
 			err = AddFinalizerToPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
 			if err != nil {
+				if errors.IsConflict(err) {
+					logger.Info("Conflict adding finalizer, will retry on re-fetch", "pipelineRun", pipelineRun.Name)
+					return ctrl.Result{}, err
+				}
 				logger.Error(err, "Failed to add finalizer", "pipelineRun", pipelineRun.Name)
 				return ctrl.Result{}, err
 			}
@@ -107,6 +115,10 @@ func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.
 		}
 		err = RemoveFinalizerFromPipelineRun(ctx, pipelineRun, r, NotificationPipelineRunFinalizer)
 		if err != nil {
+			if errors.IsConflict(err) {
+				logger.Info("Conflict removing finalizer on ended run, will retry on re-fetch", "pipelineRun", pipelineRun.Name)
+				return ctrl.Result{}, err
+			}
 			logger.Error(err, "Failed to remove finalizer", "pipelineRun", pipelineRun.Name)
 			return ctrl.Result{}, err
 		}
