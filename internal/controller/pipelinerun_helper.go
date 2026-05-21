@@ -26,7 +26,7 @@ const AppLabelKey string = "appstudio.openshift.io/application"
 // If finalizer was not added successfully, a non-nil error is returned.
 func AddFinalizerToPipelineRun(ctx context.Context, pipelineRun *tektonv1.PipelineRun, r *NotificationServiceReconciler, finalizer string) error {
 	r.Log.Info("Adding finalizer", "pipelineRun", pipelineRun.Name)
-	patch := client.MergeFrom(pipelineRun.DeepCopy())
+	patch := client.MergeFromWithOptions(pipelineRun.DeepCopy(), client.MergeFromWithOptimisticLock{})
 	if ok := controllerutil.AddFinalizer(pipelineRun, finalizer); ok {
 		err := r.Client.Patch(ctx, pipelineRun, patch)
 		if err != nil {
@@ -41,7 +41,7 @@ func AddFinalizerToPipelineRun(ctx context.Context, pipelineRun *tektonv1.Pipeli
 // If finalizer was not removed successfully, a non-nil error is returned.
 func RemoveFinalizerFromPipelineRun(ctx context.Context, pipelineRun *tektonv1.PipelineRun, r *NotificationServiceReconciler, finalizer string) error {
 	r.Log.Info("Removing finalizer", "pipelineRun", pipelineRun.Name)
-	patch := client.MergeFrom(pipelineRun.DeepCopy())
+	patch := client.MergeFromWithOptions(pipelineRun.DeepCopy(), client.MergeFromWithOptimisticLock{})
 	if ok := controllerutil.RemoveFinalizer(pipelineRun, finalizer); ok {
 		err := r.Client.Patch(ctx, pipelineRun, patch)
 		if err != nil {
