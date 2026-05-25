@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"go/build"
 	"path/filepath"
@@ -32,6 +31,8 @@ import (
 
 	toolkit "github.com/konflux-ci/operator-toolkit/test"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,7 +54,7 @@ var testEnv *envtest.Environment
 var ctx context.Context
 var cancel context.CancelFunc
 var mn, fakeErrorNotify *MockNotifier
-var nsr, fakeErrorNotifyNsr, fakeErrorNsr *NotificationServiceReconciler
+var nsr, fakeErrorNotifyNsr, fakeErrorNsr, conflictNsr *NotificationServiceReconciler
 
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -62,28 +63,22 @@ func TestControllers(t *testing.T) {
 }
 
 type MockNotifier struct {
-	Counter            int
-	shouldThroughError bool
+	Counter   int
+	notifyErr error
 }
 
 func (mn *MockNotifier) Notify(ctx context.Context, message string) error {
 	mn.Counter++
-	if mn.shouldThroughError {
-		return errors.New("Failed to Notify")
-	}
-	return nil
+	return mn.notifyErr
 }
 
 type clientMock struct {
 	client.Client
-	shouldThroughError bool
+	patchErr error
 }
 
 func (p *clientMock) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
-	if p.shouldThroughError {
-		return errors.New("Failed to patch")
-	}
-	return nil
+	return p.patchErr
 }
 
 var _ = BeforeEach(func() {
@@ -156,26 +151,33 @@ var _ = BeforeEach(func() {
 	})
 
 	Expect(err).ToNot(HaveOccurred())
-	// Create a mock of notifier
-	mn = &MockNotifier{shouldThroughError: false}
+	mn = &MockNotifier{}
 	nsr = &NotificationServiceReconciler{
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),
 		Log:      k8sManager.GetLogger(),
 		Notifier: mn,
 	}
-	// err = nsr.SetupWithManager(k8sManager)
-	// Expect(err).ToNot(HaveOccurred())
-	fakeErrorNotify = &MockNotifier{shouldThroughError: true}
+	fakeErrorNotify = &MockNotifier{notifyErr: fmt.Errorf("Failed to Notify")}
 	fakeErrorNotifyNsr = &NotificationServiceReconciler{
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),
 		Log:      k8sManager.GetLogger(),
 		Notifier: fakeErrorNotify,
 	}
-	fakeErrorPatchClient := &clientMock{shouldThroughError: true}
+	fakeErrorPatchClient := &clientMock{patchErr: fmt.Errorf("Failed to patch")}
 	fakeErrorNsr = &NotificationServiceReconciler{
 		Client:   fakeErrorPatchClient,
+		Scheme:   k8sManager.GetScheme(),
+		Log:      k8sManager.GetLogger(),
+		Notifier: mn,
+	}
+	conflictPatchClient := &clientMock{
+		Client:   k8sClient,
+		patchErr: apierrors.NewConflict(schema.GroupResource{Group: "tekton.dev", Resource: "pipelineruns"}, "", fmt.Errorf("the object has been modified")),
+	}
+	conflictNsr = &NotificationServiceReconciler{
+		Client:   conflictPatchClient,
 		Scheme:   k8sManager.GetScheme(),
 		Log:      k8sManager.GetLogger(),
 		Notifier: mn,
