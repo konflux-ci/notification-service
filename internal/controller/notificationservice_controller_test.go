@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"knative.dev/pkg/apis"
 	v1 "knative.dev/pkg/apis/duck/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -472,6 +473,121 @@ var _ = Describe("NotificationService Controller", func() {
 					Expect(err).ToNot(HaveOccurred())
 					return controllerutil.ContainsFinalizer(createdPipelineRun, NotificationPipelineRunFinalizer)
 				}, timeout, interval).Should(BeTrue())
+			})
+		})
+	})
+
+	Describe("Testing conflict handling during reconciliation", func() {
+		Context("when a patch conflict occurs while adding a finalizer to a running PipelineRun", func() {
+			const conflictAddFinalizerPLRName = "conflict-add-finalizer-plr"
+			It("should return a conflict error and requeue", func() {
+				plr := &tektonv1.PipelineRun{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      conflictAddFinalizerPLRName,
+						Namespace: namespace,
+						Labels: map[string]string{
+							PipelineRunTypeLabel: PushPipelineRunTypeValue,
+						},
+					},
+					Spec: tektonv1.PipelineRunSpec{
+						PipelineRef: &tektonv1.PipelineRef{},
+					},
+				}
+				Expect(k8sClient.Create(ctx, plr)).To(Succeed())
+				DeferCleanup(func() {
+					_ = k8sClient.Delete(ctx, plr)
+				})
+
+				result, err := conflictNsr.Reconcile(ctx, ctrl.Request{
+					NamespacedName: types.NamespacedName{Name: conflictAddFinalizerPLRName, Namespace: namespace},
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(errors.IsConflict(err)).To(BeTrue())
+				Expect(result).To(Equal(ctrl.Result{}))
+			})
+		})
+
+		Context("when a patch conflict occurs while removing a finalizer from a deleted PipelineRun", func() {
+			const conflictDeletedPLRName = "conflict-deleted-plr"
+			It("should return a conflict error and requeue", func() {
+				plr := &tektonv1.PipelineRun{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       conflictDeletedPLRName,
+						Namespace:  namespace,
+						Finalizers: []string{NotificationPipelineRunFinalizer},
+						Labels: map[string]string{
+							PipelineRunTypeLabel: PushPipelineRunTypeValue,
+						},
+					},
+					Spec: tektonv1.PipelineRunSpec{
+						PipelineRef: &tektonv1.PipelineRef{},
+					},
+				}
+				Expect(k8sClient.Create(ctx, plr)).To(Succeed())
+				Expect(k8sClient.Delete(ctx, plr)).To(Succeed())
+				DeferCleanup(func() {
+					fetchedPlr := &tektonv1.PipelineRun{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Name: conflictDeletedPLRName, Namespace: namespace}, fetchedPlr); err == nil {
+						controllerutil.RemoveFinalizer(fetchedPlr, NotificationPipelineRunFinalizer)
+						_ = k8sClient.Update(ctx, fetchedPlr)
+					}
+				})
+
+				result, err := conflictNsr.Reconcile(ctx, ctrl.Request{
+					NamespacedName: types.NamespacedName{Name: conflictDeletedPLRName, Namespace: namespace},
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(errors.IsConflict(err)).To(BeTrue())
+				Expect(result).To(Equal(ctrl.Result{}))
+			})
+		})
+
+		Context("when a patch conflict occurs while removing a finalizer from an ended PipelineRun", func() {
+			const conflictEndedPLRName = "conflict-ended-plr"
+			It("should return a conflict error and requeue", func() {
+				plr := &tektonv1.PipelineRun{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       conflictEndedPLRName,
+						Namespace:  namespace,
+						Finalizers: []string{NotificationPipelineRunFinalizer},
+						Labels: map[string]string{
+							PipelineRunTypeLabel:                 PushPipelineRunTypeValue,
+							"appstudio.openshift.io/application": "test-app",
+						},
+					},
+					Spec: tektonv1.PipelineRunSpec{
+						PipelineRef: &tektonv1.PipelineRef{},
+					},
+				}
+				Expect(k8sClient.Create(ctx, plr)).To(Succeed())
+				Expect(k8sClient.Get(ctx, types.NamespacedName{Name: conflictEndedPLRName, Namespace: namespace}, plr)).To(Succeed())
+				plr.Status = tektonv1.PipelineRunStatus{
+					Status: v1.Status{
+						Conditions: v1.Conditions{
+							apis.Condition{
+								Status: "False",
+								Type:   apis.ConditionSucceeded,
+								Reason: "Failed",
+							},
+						},
+					},
+				}
+				Expect(k8sClient.Status().Update(ctx, plr)).To(Succeed())
+				DeferCleanup(func() {
+					fetchedPlr := &tektonv1.PipelineRun{}
+					if err := k8sClient.Get(ctx, types.NamespacedName{Name: conflictEndedPLRName, Namespace: namespace}, fetchedPlr); err == nil {
+						controllerutil.RemoveFinalizer(fetchedPlr, NotificationPipelineRunFinalizer)
+						_ = k8sClient.Update(ctx, fetchedPlr)
+						_ = k8sClient.Delete(ctx, fetchedPlr)
+					}
+				})
+
+				result, err := conflictNsr.Reconcile(ctx, ctrl.Request{
+					NamespacedName: types.NamespacedName{Name: conflictEndedPLRName, Namespace: namespace},
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(errors.IsConflict(err)).To(BeTrue())
+				Expect(result).To(Equal(ctrl.Result{}))
 			})
 		})
 	})
