@@ -1,8 +1,8 @@
 # Konflux Notification Service
 
-The Notification Service is a controller that sends push pipelineruns results to 
+The Notification Service is a controller that sends push pipelineruns results to
 [AWS SNS service](https://aws.amazon.com/sns/).
-It watches for `push pipelineruns`, extracts the results from pipelineruns that ended successfully 
+It watches for `push pipelineruns`, extracts the results from pipelineruns that ended successfully
 and sends them to a topic defined in `AWS SNS`.
 
 Secrets and environment variables are needed to configure the `AWS SNS`.
@@ -14,7 +14,7 @@ The keys can be provided as a secret (prefered option) or as environment variabl
 
 ### AWS credentials as a secret
 
-The preferred way to supply the credentials is to create a secret containing the content 
+The preferred way to supply the credentials is to create a secret containing the content
 of a credentials file.
 
 The credentails file format is:
@@ -25,11 +25,11 @@ aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>
 ```
 reference: [AWS sdk go v2](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#creating-the-credentials-file)
 
-We will create a secret to be used by the controller:  
-key name should be `credentials`.  
+We will create a secret to be used by the controller:
+key name should be `credentials`.
 Key value should be the content of the credentials file encoded to base 64.
 
-For example, if our credentials file content encoded to base 64 is: `dGVzdA==`, 
+For example, if our credentials file content encoded to base 64 is: `dGVzdA==`,
 the secret will be:
 ```
 kind: Secret
@@ -59,7 +59,7 @@ type: Opaque
 ```
 
 Create a deployment with the secret mounted:
-``` 
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -80,7 +80,7 @@ spec:
       volumes:
       - name: vol-secret
         secret:
-          secretName: aws-sns-secret    
+          secretName: aws-sns-secret
       serviceAccountName: notification-controller-sa
       containers:
       - name: notification-controller
@@ -92,7 +92,7 @@ spec:
           value: < Region >
         volumeMounts:
         - name: vol-secret
-          mountPath: /.aws    
+          mountPath: /.aws
 ```
 
 ### AWS credentilas as Environment Variables
@@ -105,7 +105,7 @@ Another way to supply the credentials is Environment Variables.
 
 #### Deployment example
 
-``` 
+```
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -140,7 +140,7 @@ spec:
 
 ## Define Topic and Region
 
-These environment variables will be used to define the `SNS topic` which the messages will 
+These environment variables will be used to define the `SNS topic` which the messages will
 be sent to and the `region` of the AWS account.
 
 | Name | Description |
@@ -150,7 +150,7 @@ be sent to and the `region` of the AWS account.
 
 ## Configure PipelineRun Filtering
 
-By default, the controller only processes PipelineRuns with the label `pipelinesascode.tekton.dev/event-type=push`. 
+By default, the controller only processes PipelineRuns with the label `pipelinesascode.tekton.dev/event-type=push`.
 This can be customized using the following optional environment variables:
 
 | Name | Description | Example |
@@ -158,7 +158,7 @@ This can be customized using the following optional environment variables:
 | NOTIFICATION_FILTER_LABELS | Comma-separated list of label key=value pairs to filter PipelineRuns | `pipelinesascode.tekton.dev/event-type=push` |
 | NOTIFICATION_FILTER_ANNOTATIONS | Comma-separated list of annotation keys to filter PipelineRuns by presence | `my-custom-annotation` |
 
-**Note:** If both variables are unset, the controller defaults to filtering by the label key-value pair `pipelinesascode.tekton.dev/event-type=push`. 
+**Note:** If both variables are unset, the controller defaults to filtering by the label key-value pair `pipelinesascode.tekton.dev/event-type=push`.
 If either variable is set, only PipelineRuns matching the configured filters will be processed.
 
 ## Running, building and testing the controller
@@ -168,13 +168,13 @@ the repository and running `make` over any of the provided targets.
 
 ### Running the controller locally
 
-When testing locally, the command `make run install` can be used to deploy and run the controller. 
-If any change has been done in the code, `make manifests generate` should be executed before to generate the new resources
-and build the controller.
+When testing locally, the command `make run` can be used to run the controller against the cluster
+in your current kubeconfig context. The target chains `manifests generate fmt vet` automatically,
+so there is no need to run them separately.
 
 ### Build and push a new image
 
-To build the controller and push a new image to the registry, the following commands can be used: 
+To build the controller and push a new image to the registry, the following commands can be used:
 
 ```shell
 $ make docker-build
