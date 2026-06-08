@@ -183,3 +183,13 @@ Tekton's `PipelineRun` resource. The `make install`/`make uninstall` Makefile ta
   - `build-pipeline.yaml` -- Multi-arch trusted-artifact pipeline with Cachi2 prefetch (gomod)
   - `notification-service-pull-request.yaml` -- PaC PipelineRun for PRs
   - `notification-service-push.yaml` -- PaC PipelineRun for pushes to main
+
+## AI Skills
+
+Skills live in `skills/` and are symlinked to `.cursor/skills` and `.claude/skills` for IDE discovery.
+
+| Skill | Purpose |
+|-------|---------|
+| run-tests | How to run unit and e2e tests |
+| local-dev-setup | Running the controller locally or deploying to a cluster |
+| debug-running-instance | Debugging a deployed controller instance |
