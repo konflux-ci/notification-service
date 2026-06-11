@@ -31,7 +31,7 @@ spec:
       volumes:
       - name: vol-secret
         secret:
-          secretName: aws-sns-secret        
+          secretName: aws-sns-secret
       securityContext:
         runAsNonRoot: true
       containers:

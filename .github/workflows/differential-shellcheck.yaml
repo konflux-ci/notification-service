@@ -1,0 +1,34 @@
+name: Differential ShellCheck
+
+on:
+  pull_request:
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # required for all workflows
+      security-events: write
+
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v6
+        with:
+          # Differential ShellCheck requires full git history
+          fetch-depth: 0
+
+      - id: DiffShellCheck
+        name: Differential ShellCheck
+        uses: redhat-plumbers-in-action/differential-shellcheck@d965e66ec0b3b2f821f75c8eff9b12442d9a7d1e  # v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -177,6 +177,8 @@ Tekton's `PipelineRun` resource. The `make install`/`make uninstall` Makefile ta
 
 - **GitHub Actions** (`.github/workflows/`):
   - `go-lint.yaml` -- `make lint` + AGENTS.md line count validation
+  - `differential-shellcheck.yaml` -- ShellCheck on changed shell scripts
+  - `yaml-lint.yaml` -- yamllint on YAML files
   - `go-test.yaml` -- `make test` + Codecov upload (OIDC)
   - `fullsend.yaml` -- Agent automation dispatch (review/fix/triage)
 - **Tekton / Konflux** (`.tekton/`):
