@@ -28,7 +28,7 @@ func AddFinalizerToPipelineRun(ctx context.Context, pipelineRun *tektonv1.Pipeli
 	r.Log.Info("Adding finalizer", "pipelineRun", pipelineRun.Name)
 	patch := client.MergeFromWithOptions(pipelineRun.DeepCopy(), client.MergeFromWithOptimisticLock{})
 	if ok := controllerutil.AddFinalizer(pipelineRun, finalizer); ok {
-		err := r.Client.Patch(ctx, pipelineRun, patch)
+		err := r.Patch(ctx, pipelineRun, patch)
 		if err != nil {
 			return fmt.Errorf("error occurred while patching the updated PipelineRun after finalizer addition: %w", err)
 		}
@@ -43,7 +43,7 @@ func RemoveFinalizerFromPipelineRun(ctx context.Context, pipelineRun *tektonv1.P
 	r.Log.Info("Removing finalizer", "pipelineRun", pipelineRun.Name)
 	patch := client.MergeFromWithOptions(pipelineRun.DeepCopy(), client.MergeFromWithOptimisticLock{})
 	if ok := controllerutil.RemoveFinalizer(pipelineRun, finalizer); ok {
-		err := r.Client.Patch(ctx, pipelineRun, patch)
+		err := r.Patch(ctx, pipelineRun, patch)
 		if err != nil {
 			return fmt.Errorf("error occurred while patching the updated PipelineRun after finalizer removal: %w", err)
 		}
@@ -56,21 +56,22 @@ func RemoveFinalizerFromPipelineRun(ctx context.Context, pipelineRun *tektonv1.P
 // And adds the pipelinerunName
 // Return error if failed to extract results or if results does not exist
 func GetResultsFromPipelineRun(pipelineRun *tektonv1.PipelineRun) ([]byte, error) {
-	namedResults := []tektonv1.PipelineRunResult{
-		{
+	fetchedResults := pipelineRun.Status.Results
+	namedResults := make([]tektonv1.PipelineRunResult, 0, 3+len(fetchedResults))
+	namedResults = append(namedResults,
+		tektonv1.PipelineRunResult{
 			Name:  "PIPELINERUN_NAME",
 			Value: *tektonv1.NewStructuredValues(pipelineRun.Name),
 		},
-		{
+		tektonv1.PipelineRunResult{
 			Name:  "NAMESPACE",
 			Value: *tektonv1.NewStructuredValues(pipelineRun.Namespace),
 		},
-		{
+		tektonv1.PipelineRunResult{
 			Name:  "APPLICATION",
 			Value: *tektonv1.NewStructuredValues(GetApplicationNameFromPipelineRun(pipelineRun)),
 		},
-	}
-	fetchedResults := pipelineRun.Status.Results
+	)
 	fullResults := append(namedResults, fetchedResults...)
 	results, err := json.Marshal(fullResults)
 	if err != nil {
@@ -88,7 +89,7 @@ func AddAnnotationToPipelineRun(ctx context.Context, pipelineRun *tektonv1.Pipel
 	if err != nil {
 		return fmt.Errorf("error occurred while setting the annotation: %w", err)
 	}
-	err = r.Client.Patch(ctx, pipelineRun, patch)
+	err = r.Patch(ctx, pipelineRun, patch)
 	if err != nil {
 		r.Log.Error(err, "Error in update annotation patching", "pipelineRun", pipelineRun.Name)
 		return fmt.Errorf("error occurred while patching the updated pipelineRun after annotation addition: %w", err)
