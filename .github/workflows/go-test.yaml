@@ -31,7 +31,7 @@ jobs:
       run: make test
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         use_oidc: true
         flags: unit-tests
