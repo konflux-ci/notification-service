@@ -31,12 +31,12 @@ func (msn *MockSNSPublisher) Publish(
 	}
 }
 
-func MockSucceessfulRefreshSuccessPublishClient() (Publisher, error) {
+func MockSuccessfulRefreshSuccessPublishClient() (Publisher, error) {
 	mp := &MockSNSPublisher{fail: false}
 	return mp, nil
 }
 
-func MockSucceessfulRefreshFailPublishClient() (Publisher, error) {
+func MockSuccessfulRefreshFailPublishClient() (Publisher, error) {
 	mp := &MockSNSPublisher{fail: true}
 	return mp, nil
 }
@@ -65,7 +65,7 @@ func TestSuccessNotify(t *testing.T) {
 	mp := &MockSNSPublisher{fail: false}
 	ntf := &SNSNotifier{
 		Pub:           mp,
-		RefreshClient: MockSucceessfulRefreshSuccessPublishClient,
+		RefreshClient: MockSuccessfulRefreshSuccessPublishClient,
 		Log:           logger,
 	}
 	err := ntf.Notify(ctx, "testMessage")
@@ -84,7 +84,8 @@ func TestFailedRefreshNotify(t *testing.T) {
 	}
 	err := ntf.Notify(ctx, "testMessage")
 	if err == nil {
-		t.Errorf("got %q, wanted nil", err)
+		t.Errorf("expected error, got nil")
+		return
 	}
 	if err.Error() != refreshErrorMessage {
 		t.Errorf("got %q, wanted %q", err.Error(), refreshErrorMessage)
@@ -96,13 +97,14 @@ func TestFailedPublishNotify(t *testing.T) {
 	mp := &MockSNSPublisher{fail: true}
 	ntf := &SNSNotifier{
 		Pub:           mp,
-		RefreshClient: MockSucceessfulRefreshFailPublishClient,
+		RefreshClient: MockSuccessfulRefreshFailPublishClient,
 		Log:           logger,
 	}
 
 	err := ntf.Notify(ctx, "testMessage")
 	if err == nil {
-		t.Errorf("got %q, wanted nil", err)
+		t.Errorf("expected error, got nil")
+		return
 	}
 	if err.Error() != publishErrorMessage {
 		t.Errorf("got %q, wanted %q", err.Error(), publishErrorMessage)
