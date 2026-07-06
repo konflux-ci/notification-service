@@ -44,7 +44,7 @@ type NotificationServiceReconciler struct {
 // Reconcile will monitor the pipelinerun, extract its result and send it as a webhook
 // When a pipelinerun is created, it will add a finalizer to it so we will be able to extract the results
 // After a pipelinerun ends successfully, the results will be extracted from it and will be sent as a webhook,
-// An annotation will be added to mark this pipelinerun as handled and the finalizer will be rmoved
+// An annotation will be added to mark this pipelinerun as handled and the finalizer will be removed
 // to allow the deletion of this pipelinerun
 func (r *NotificationServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithName("Notification controller")

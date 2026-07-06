@@ -20,7 +20,7 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 	var (
 		testTruePipelineRun,
 		testFalsePipelineRun,
-		testErrMmarshelPipelineRun,
+		testErrMarshalPipelineRun,
 		testResourcesPipelineRun *tektonv1.PipelineRun
 		notPipelineRun *tektonv1.TaskRun
 	)
@@ -283,7 +283,7 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 		})
 	})
 	Describe("When results fails to marshal", func() {
-		testErrMmarshelPipelineRun = &tektonv1.PipelineRun{
+		testErrMarshalPipelineRun = &tektonv1.PipelineRun{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pushPipelineRunName,
 				Namespace: notPipelineRun.Namespace,
@@ -326,10 +326,10 @@ var _ = Describe("Unit testing for pipelinerun_helper", func() {
 		}
 		Context("when a push pipelinerun is created, and results cannot be marshaled", func() {
 			It("GetResultsFromPipelineRun should return an error", func() {
-				got, err := GetResultsFromPipelineRun(testErrMmarshelPipelineRun)
+				got, err := GetResultsFromPipelineRun(testErrMarshalPipelineRun)
 				Expect(got).To(BeNil())
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("failed to marshel results from pipelinerun %s", testErrMmarshelPipelineRun.Name))
+				Expect(err.Error()).To(ContainSubstring("failed to marshal results from pipelinerun %s", testErrMarshalPipelineRun.Name))
 			})
 		})
 	})

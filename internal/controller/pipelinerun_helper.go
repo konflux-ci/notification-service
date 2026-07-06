@@ -75,7 +75,7 @@ func GetResultsFromPipelineRun(pipelineRun *tektonv1.PipelineRun) ([]byte, error
 	fullResults := append(namedResults, fetchedResults...)
 	results, err := json.Marshal(fullResults)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshel results from pipelinerun %s: %w", pipelineRun.Name, err)
+		return nil, fmt.Errorf("failed to marshal results from pipelinerun %s: %w", pipelineRun.Name, err)
 	}
 	return results, nil
 }
@@ -182,7 +182,7 @@ func ShouldProcessPipelineRun(object client.Object) bool {
 }
 
 // GetApplicationNameFromPipelineRun gets the application name from the application label
-// Returns the application name or empty string in case the applicatio name could not retrieved
+// Returns the application name or empty string in case the application name could not be retrieved
 func GetApplicationNameFromPipelineRun(pipelineRun *tektonv1.PipelineRun) string {
 	appLabel, err := metadata.GetLabelsWithPrefix(pipelineRun, AppLabelKey)
 	if err != nil {
