@@ -1,6 +1,6 @@
 module github.com/konflux-ci/notification-service
 
-go 1.26
+go 1.26.4
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.42.1
@@ -8,8 +8,8 @@ require (
 	github.com/konflux-ci/operator-toolkit v0.0.0-20260312101100-d4e398191a68
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.1
-	github.com/tektoncd/pipeline v1.13.1
-	k8s.io/apimachinery v0.35.6
+	github.com/tektoncd/pipeline v1.14.0
+	k8s.io/apimachinery v0.36.2
 	k8s.io/client-go v0.35.6
 	knative.dev/pkg v0.0.0-20260622140654-39ebae2ee2dc
 	sigs.k8s.io/controller-runtime v0.23.3
@@ -76,6 +76,7 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	k8s.io/apiserver v0.35.6 // indirect
+	k8s.io/streaming v0.36.2 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.36.0 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.1 // indirect
