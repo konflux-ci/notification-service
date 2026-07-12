@@ -167,8 +167,9 @@ Tekton's `PipelineRun` resource. The `make install`/`make uninstall` Makefile ta
 
 ## Dependency Notes
 
-- `go.mod` contains a `replace` directive pinning `github.com/google/cel-go` to `v0.28.1`.
-  Preserve this when updating dependencies
+- `go.mod` contains a `replace` directive for `github.com/google/cel-go`.
+  Preserve this directive when updating dependencies — check `go.mod`
+  for the current pinned version.
 - `github.com/konflux-ci/operator-toolkit` provides metadata helpers (`HasLabelWithValue`,
   `HasAnnotation`, `SetAnnotation`) and test utilities (`GetRelativeDependencyPath`)
 - `knative.dev/pkg/apis` provides `ConditionSucceeded` for checking PipelineRun status
