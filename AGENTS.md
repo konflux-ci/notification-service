@@ -174,6 +174,42 @@ Tekton's `PipelineRun` resource. The `make install`/`make uninstall` Makefile ta
   `HasAnnotation`, `SetAnnotation`) and test utilities (`GetRelativeDependencyPath`)
 - `knative.dev/pkg/apis` provides `ConditionSucceeded` for checking PipelineRun status
 
+## Dependency Management
+
+### MintMaker Renovate Precedence
+
+This repo uses MintMaker, the org-wide Renovate bot managed by the konflux-ci
+organization. MintMaker's global Renovate config defines manager-scoped
+`gomod.packageRules` that take precedence over repo-level root-level
+`packageRules` entries for gomod-managed dependencies.
+
+**Key rule:** Gomod-specific Renovate overrides in `renovate.json` MUST be
+placed under `gomod.packageRules`, not in the top-level `packageRules` array
+(even with `matchManagers: ["gomod"]`). A root-level `packageRules` entry with
+`matchManagers` will be overridden by MintMaker's manager-scoped config and
+will have no effect.
+
+The existing `gomod.packageRules` block in `renovate.json` is the canonical
+pattern for this repo:
+
+```json
+"gomod": {
+  "packageRules": [
+    {
+      "matchDepTypes": ["indirect"],
+      "enabled": false
+    }
+  ]
+}
+```
+
+Any new gomod-specific rules (e.g., pinning a package, disabling updates for a
+dependency, grouping related modules) must be added to this `gomod.packageRules`
+array, not to the root-level `packageRules`.
+
+This precedence model applies org-wide across konflux-ci and has been
+independently adopted in multiple repos (reverse-proxy, konflux-ci).
+
 ## CI and Pipelines
 
 - **GitHub Actions** (`.github/workflows/`):
