@@ -15,7 +15,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.23.3
 )
 
-replace github.com/google/cel-go => github.com/google/cel-go v0.29.2
+replace github.com/google/cel-go => github.com/google/cel-go v0.30.0
 
 require (
 	cel.dev/expr v0.25.2 // indirect
