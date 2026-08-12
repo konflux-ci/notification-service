@@ -7,6 +7,12 @@ and sends them to a topic defined in `AWS SNS`.
 
 Secrets and environment variables are needed to configure the `AWS SNS`.
 
+## Installation
+
+Local run or cluster deploy: [skills/local-dev-setup/SKILL.md](skills/local-dev-setup/SKILL.md).
+Configure AWS credentials, topic/region, and PipelineRun filters in the sections below.
+Build, push, and test: [Running, building and testing the controller](#running-building-and-testing-the-controller).
+
 ## AWS credentials
 
 `AWS Access key id` and `AWS secret access key` are needed to sign requests to AWS.
