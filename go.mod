@@ -10,8 +10,8 @@ require (
 	github.com/onsi/gomega v1.42.1
 	github.com/tektoncd/pipeline v1.15.0
 	k8s.io/apimachinery v0.36.3
-	k8s.io/client-go v0.35.7
-	knative.dev/pkg v0.0.0-20260820190123-c9015f8bfdea
+	k8s.io/client-go v0.35.8
+	knative.dev/pkg v0.0.0-20260825072334-d2a153acc00c
 	sigs.k8s.io/controller-runtime v0.23.3
 )
 
@@ -75,7 +75,7 @@ require (
 	golang.org/x/mod v0.39.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
-	k8s.io/apiserver v0.35.7 // indirect
+	k8s.io/apiserver v0.35.8 // indirect
 	k8s.io/streaming v0.36.3 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.36.0 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
@@ -127,9 +127,9 @@ require (
 	google.golang.org/grpc v1.83.0 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.35.7 // indirect
-	k8s.io/apiextensions-apiserver v0.35.7 // indirect
-	k8s.io/component-base v0.35.7 // indirect
+	k8s.io/api v0.35.8 // indirect
+	k8s.io/apiextensions-apiserver v0.35.8 // indirect
+	k8s.io/component-base v0.35.8 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260706235625-cdb1db5517a0 // indirect
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect
