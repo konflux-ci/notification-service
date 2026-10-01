@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/logr v1.4.4
 	github.com/konflux-ci/operator-toolkit v0.0.0-20260921214948-0f252ff98994
 	github.com/onsi/ginkgo/v2 v2.32.2
-	github.com/onsi/gomega v1.43.0
+	github.com/onsi/gomega v1.44.0
 	github.com/tektoncd/pipeline v1.16.0
 	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.1
