@@ -12,7 +12,7 @@ require (
 	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.1
 	knative.dev/pkg v0.0.0-20260918182429-5dc1978f0042
-	sigs.k8s.io/controller-runtime v0.25.1
+	sigs.k8s.io/controller-runtime v0.25.2
 )
 
 replace github.com/google/cel-go => github.com/google/cel-go v0.31.0
