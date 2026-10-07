@@ -247,3 +247,4 @@ Skills live in `skills/` and are symlinked to `.cursor/skills` and `.claude/skil
 | run-tests | How to run unit and e2e tests |
 | local-dev-setup | Running the controller locally or deploying to a cluster |
 | debug-running-instance | Debugging a deployed controller instance |
+| retro-filing-policy | Retro output (PR close or `/fs-retro`). Keep `proposals` empty unless the human comment explicitly says to file issues. |
