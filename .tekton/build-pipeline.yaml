@@ -235,14 +235,7 @@ spec:
       runAfter:
         - prefetch-dependencies
       taskRef:
-        params:
-          - name: name
-            value: buildah-remote-oci-ta
-          - name: bundle
-            value: quay.io/konflux-ci/tekton-catalog/task-buildah-remote-oci-ta:0.13.0@sha256:04dbc0e479ebc2d7c94a4e1cde84aaf3f6ab84b3e1bbae012a4554219a297618
-          - name: kind
-            value: task
-        resolver: bundles
+        name: buildah-remote-oci-ta
     - name: build-image-index
       params:
         - name: IMAGE
