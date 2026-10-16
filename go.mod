@@ -11,7 +11,7 @@ require (
 	github.com/tektoncd/pipeline v1.16.0
 	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.1
-	knative.dev/pkg v0.0.0-20260918182429-5dc1978f0042
+	knative.dev/pkg v0.0.0-20261009131428-795a0f63c441
 	sigs.k8s.io/controller-runtime v0.25.2
 )
 
@@ -121,7 +121,7 @@ require (
 	golang.org/x/term v0.46.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.49.0 // indirect
+	golang.org/x/tools v0.51.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/grpc v1.83.2 // indirect
