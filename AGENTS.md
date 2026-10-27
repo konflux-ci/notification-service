@@ -237,6 +237,10 @@ independently adopted in multiple repos (reverse-proxy, konflux-ci).
   - `build-pipeline.yaml` -- Multi-arch trusted-artifact pipeline with Cachi2 prefetch (gomod)
   - `notification-service-pull-request.yaml` -- PaC PipelineRun for PRs
   - `notification-service-push.yaml` -- PaC PipelineRun for pushes to main
+  - Builds are hermetic (`hermetic: "true"`) with `prefetch-input` `[{"type":"gomod","path":"."}]`.
+    The Dockerfile builds only the in-repo `manager` binary from those prefetched modules
+    (do not `COPY` foreign Go binaries such as `oc`/`kubectl` — that breaks
+    `sbom_spdx.hermeto_attribution_required`).
 
 ## AI Skills
 
