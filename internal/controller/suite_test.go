@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"go/build"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -31,7 +32,10 @@ import (
 
 	toolkit "github.com/konflux-ci/operator-toolkit/test"
 	tektonv1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -41,6 +45,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/yaml"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -132,6 +137,30 @@ var _ = BeforeEach(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	By("applying the generated RBAC for the controller ServiceAccount")
+	Expect(k8sClient.Create(ctx, &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: "system"},
+	})).To(Succeed())
+	for _, manifest := range []struct {
+		filename string
+		object   client.Object
+	}{
+		{"service_account.yaml", &corev1.ServiceAccount{}},
+		{"role.yaml", &rbacv1.ClusterRole{}},
+		{"role_binding.yaml", &rbacv1.ClusterRoleBinding{}},
+	} {
+		data, err := os.ReadFile(filepath.Join("..", "..", "config", "rbac", manifest.filename))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(yaml.Unmarshal(data, manifest.object)).To(Succeed())
+		Expect(k8sClient.Create(ctx, manifest.object)).To(Succeed())
+	}
+	// Keep the admin client for fixtures, but run reconciliation with the deployed role.
+	controllerConfig := rest.CopyConfig(cfg)
+	controllerConfig.Impersonate = rest.ImpersonationConfig{
+		UserName: "system:serviceaccount:system:controller-manager",
+		Groups:   []string{"system:authenticated", "system:serviceaccounts", "system:serviceaccounts:system"},
+	}
+
 	/*
 		Create k8sManager and validate it
 		Note that we set up both a "live" k8s client and a separate client from the manager. This is because when making
@@ -143,7 +172,7 @@ var _ = BeforeEach(func() {
 		https://github.com/kubernetes-sigs/kubebuilder/blob/de1cc60900b896b2195e403a40c976a892df4921/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/suite_test.go#L136
 	*/
 	// Skip controller name validation for the unit tests
-	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
+	k8sManager, err = ctrl.NewManager(controllerConfig, ctrl.Options{
 		Scheme: clientsetscheme.Scheme,
 		Controller: config.Controller{
 			SkipNameValidation: &[]bool{true}[0],

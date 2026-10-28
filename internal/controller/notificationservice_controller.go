@@ -37,8 +37,7 @@ type NotificationServiceReconciler struct {
 	Notifier notifier.Notifier
 }
 
-// +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns,verbs=get;list;watch;create;update;patch
-// +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns,verbs=get;list;watch;patch
 // +kubebuilder:rbac:groups=tekton.dev,resources=pipelineruns/finalizers,verbs=update
 
 // Reconcile will monitor the pipelinerun, extract its result and send it as a webhook
