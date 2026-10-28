@@ -9,23 +9,13 @@ rules:
   resources:
   - pipelineruns
   verbs:
-  - create
   - get
   - list
   - patch
-  - update
   - watch
 - apiGroups:
   - tekton.dev
   resources:
   - pipelineruns/finalizers
   verbs:
-  - update
-- apiGroups:
-  - tekton.dev
-  resources:
-  - pipelineruns/status
-  verbs:
-  - get
-  - patch
   - update

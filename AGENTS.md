@@ -172,7 +172,7 @@ go vet ./pkg/notifier/
 config/
   default/     - Main overlay: combines manager + RBAC + prometheus
   manager/     - Deployment for the controller (image: controller:latest)
-  rbac/        - ClusterRole (tekton.dev PipelineRuns CRUD), ServiceAccount, bindings
+  rbac/        - ClusterRole (tekton.dev PipelineRuns: get/list/watch/patch; finalizers: update), ServiceAccount, bindings
   prometheus/  - ServiceMonitor scraping the /metrics endpoint
 ```
 
