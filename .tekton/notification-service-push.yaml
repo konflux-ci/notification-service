@@ -13,7 +13,7 @@ metadata:
     appstudio.openshift.io/component: notification-service
     pipelines.appstudio.openshift.io/type: build
   name: notification-service-on-push
-  namespace: konflux-vanguard-tenant
+  namespace: prodsec-spog-tenant
 spec:
   params:
   - name: git-url
@@ -21,7 +21,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/konflux-vanguard-tenant/notification-service/notification-service:{{revision}}
+    value: quay.io/redhat-user-workloads/prodsec-spog-tenant/notification-service/notification-service:{{revision}}
   - name: dockerfile
     value: Dockerfile
   - name: path-context
