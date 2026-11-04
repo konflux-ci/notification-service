@@ -37,6 +37,12 @@ spec:
     value:
     - linux/x86_64
     - linux/arm64
+  # Hermetic build + Hermeto gomod prefetch so SPDX packages carry hermeto:found_by
+  # (required by sbom_spdx.hermeto_attribution_required).
+  - name: hermetic
+    value: "true"
+  - name: prefetch-input
+    value: '[{"type": "gomod", "path": "."}]'
   pipelineRef:
     name: build-pipeline
   taskRunTemplate:
